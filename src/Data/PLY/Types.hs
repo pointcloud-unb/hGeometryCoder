@@ -1,8 +1,8 @@
 module Data.PLY.Types where
 
 import Data.ByteString (ByteString)
-import Data.Int
-import Data.Word
+import Data.Int (Int8, Int16)
+import Data.Word (Word8, Word16, Word32)
 
 
 data Header = Header Format [Element]
