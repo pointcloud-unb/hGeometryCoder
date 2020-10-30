@@ -6,9 +6,18 @@ import Data.Attoparsec.ByteString.Char8 hiding (char)
 import Data.ByteString.Char8 (ByteString, pack)
 import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
+import Data.Vector (Vector, fromList, replicateM)
+
 import Data.PLY.Types
 
 
+-- * ASCII parsers
+-- | Parse a given element data.
+elementData :: Element -> Parser (Vector (Vector Scalar))
+elementData e = replicateM (elNum e)
+                  (skipComments *> (fromList <$> dataLine (elProps e)))
+
+-- * Header parser
 -- | Parse the PLY header
 header :: Parser Header
 header = Header <$> preamble <*> elements <* "end_header" <* endOfLine
@@ -107,6 +116,9 @@ float = realToFrac <$> double
 -- * Utility parsers
 skipComments :: Parser ()
 skipComments = skipSpace *> ("comment " *> takeLine *> skipComments) <|> pure ()
+
+skipElementData :: Element -> Parser ()
+skipElementData e = count (elNum e) (skipComments *> takeLine) *> pure ()
 
 takeLine :: Parser ByteString
 takeLine = pack <$> manyTill anyChar endOfLine
