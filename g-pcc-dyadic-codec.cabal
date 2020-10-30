@@ -23,6 +23,7 @@ common common-options
   build-depends:       base ^>= 4.13.0.0
                      , bytestring
                      , attoparsec
+                     , vector
 
   ghc-options:         -Wall
                        -Wcompat
@@ -47,8 +48,10 @@ library
   import:              common-options
   hs-source-dirs:      src
   exposed-modules:     GPccDyadicCodec
-  other-modules:       Data.PLY.Types
+                     , Data.PLY.Types
                      , Data.PLY.Parser
+                     , Data.PLY
+  other-modules:
 
 executable g-pcc-dyadic-codec
   import:              common-options
