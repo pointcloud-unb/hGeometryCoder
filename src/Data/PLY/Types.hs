@@ -5,6 +5,13 @@ import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
 
 
+data PLY = PLY { plyHeader :: Header
+               , plyData   :: PLYData }
+  deriving (Show)
+
+type PLYData = ByteString
+
+
 data Header = Header Format [Element]
   deriving (Show)
 
