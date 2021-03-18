@@ -1,16 +1,9 @@
-# Point Cloud Geometry Compression Dyadic Decomposition
+# g-pcc-dyadic-codec
 
-- O projeto se trata de um algoritmo de compressão geométrica 
-de um Point Cloud 3D baseado nos papers publicado pelos professores Edil Medeiros e Eduardo Peixoto, técnica de compressão baseada na *dyadic decomposition*. Sua estrutura consiste em 3 módulos:
+[![Build status](https://img.shields.io/travis/com/joseedil/g-pcc-dyadic-codec/master?logo=travis)](https://travis-ci.com/joseedil/g-pcc-dyadic-codec)
+[![Hackage](https://img.shields.io/hackage/v/g-pcc-dyadic-codec.svg?logo=haskell)](https://hackage.haskell.org/package/g-pcc-dyadic-codec)
+[![Stackage Lts](http://stackage.org/package/g-pcc-dyadic-codec/badge/lts)](http://stackage.org/lts/package/g-pcc-dyadic-codec)
+[![Stackage Nightly](http://stackage.org/package/g-pcc-dyadic-codec/badge/nightly)](http://stackage.org/nightly/package/g-pcc-dyadic-codec)
+[![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-1. Um parser, que lerá um arquivo `.ply` e será capaz de construir a point cloud
- para o programa processá-lo(já feito e concedido pelo professor).
-
-1. O algoritmo baseado na Dyadic decomposition, assim como as estruturas de dados 
-necessários para o seu funcionamento(PointCloud, Pixel, Silhouette, árvore de 
-decomposição...)
-
-1. Codificação Aritmético binário com contexto adaptativo(CABAC), que será responsável 
- por codificar a compressão geométrica do Point Cloud para o arquivo comprimido final.
-
-1. Um writer de Bitstream do arquivo .ply comprimido pelo algoritmo proposto.
+See README for more info
