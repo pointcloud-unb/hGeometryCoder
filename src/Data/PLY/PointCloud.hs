@@ -1,7 +1,19 @@
 module Data.PLY.PointCloud where
 
+import      Data.List
+
+-- Voxel type
 data Voxel = Voxel Int Int Int
   deriving(Show)
+
+instance Eq Voxel where
+  -- (==) Voxel -> Voxel -> Bool
+  (Voxel x1 y1 z1) == 
+    (Voxel x2 y2 z2) = (x1 == x2) && (y1 == y2) && (z1 == z2)
+
+  -- (!=) Voxel -> Voxel -> Bool
+  (Voxel x1 y1 z1) /= 
+    (Voxel x2 y2 z2) = (x1 /= x2) || (y1 /= y2) || (z1 /= z2)
 
 -- Less comparison
 less :: Voxel -> Voxel -> Bool
@@ -46,3 +58,17 @@ greaterOrEqual :: Voxel -> Voxel -> Bool
         y1 >= y2
     else
       x1 >= x2
+
+-- Point Cloud type
+newtype PointCloud = PointCloud [Voxel]
+  deriving(Show)
+
+instance Eq PointCloud where
+  (PointCloud voxel_list_1) ==
+    (PointCloud voxel_list_2) = voxel_list_1 == voxel_list_2
+
+addVoxel :: PointCloud -> Voxel -> PointCloud
+addVoxel (PointCloud list) voxel = PointCloud (list ++ [voxel]) 
+
+removeVoxel :: PointCloud -> Voxel -> PointCloud
+removeVoxel (PointCloud list) voxel = PointCloud (delete voxel list)
