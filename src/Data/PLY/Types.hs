@@ -6,11 +6,10 @@ import Data.Word (Word8, Word16, Word32)
 
 
 data PLY = PLY { plyHeader :: Header
-               , plyData   :: PLYData }
+               , plyData   :: [Values] }
   deriving (Show)
 
-type PLYData = ByteString
-
+type Values = [Scalar]
 
 data Header = Header Format [Element]
   deriving (Show)
