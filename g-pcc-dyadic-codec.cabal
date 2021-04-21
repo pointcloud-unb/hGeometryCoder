@@ -51,7 +51,9 @@ library
   exposed-modules:     GPccDyadicCodec
                      , Data.PLY.Types
                      , Data.PLY.Parser
+                     , Data.PLY.PointCloud
                      , Data.PLY
+                     , Data.Utils
   other-modules:
 
 executable g-pcc-dyadic-codec

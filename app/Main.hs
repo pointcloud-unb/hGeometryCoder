@@ -1,7 +1,9 @@
 module Main (main) where
 
-import GPccDyadicCodec (someFunc)
+import Data.Utils (getPointCloud)
+import Data.PLY.PointCloud (PointCloud)
+import Data.PLY (loadPLY)
 
 
-main :: IO ()
-main = someFunc
+main :: IO (Either String PointCloud)
+main = getPointCloud <$> loadPLY "test.ply"
