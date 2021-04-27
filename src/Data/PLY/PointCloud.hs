@@ -56,7 +56,7 @@ instance Ord Voxel where
 
 -- Point Cloud type
 newtype PointCloud = PointCloud [Voxel]
-  deriving(Show)
+  deriving (Show)
 
 instance Eq PointCloud where
   (PointCloud voxel_list_1) ==

@@ -13,9 +13,12 @@ import Data.PLY.Types
 
 -- * ASCII parsers
 -- | Parse a given element data.
-elementData :: Element -> Parser (Vector (Vector Scalar))
-elementData e = replicateM (elNum e)
-                  (skipComments *> (fromList <$> dataLine (elProps e)))
+-- elementData :: Element -> Parser (Vector (Vector Scalar))
+-- elementData e = replicateM (elNum e)
+--                   (skipComments *> (fromList <$> dataLine (elProps e)))
+elementData :: Element -> Parser [Values]
+elementData e = count (elNum e)
+                  (skipComments *> dataLine (elProps e))
 
 -- * Header parser
 -- | Parse the PLY header
@@ -31,13 +34,13 @@ format = "format" *> skipSpace *> (ascii <|> binaryLE <|> binaryBE)
         binaryBE = BinaryBE <$ "binary_big_endian 1.0"
 
 element :: Parser Element
-element = Element <$> ("element " *> takeTill isSpace)
+element = Element <$> (skipSpace *> "element " *> takeTill isSpace)
                   <*> (skipSpace *> int <* skipSpace)
                   <*> (many' property)
 
 property :: Parser Property
 property = skipComments *> (scalarProperty <|> listProperty)
-  where scalarProperty = ScalarProperty <$> ("property " *> scalarType) <*> takeLine
+  where scalarProperty = ScalarProperty <$> (skipSpace *> "property " *> scalarType) <*> takeLine
         listProperty = ListProperty <$>
                        ("property list " *> scalarType) <*>
                        (skipSpace *> scalarType <* skipSpace) <*>

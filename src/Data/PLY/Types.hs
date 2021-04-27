@@ -11,7 +11,8 @@ data PLY = PLY { plyHeader :: Header
 
 type Values = [Scalar]
 
-data Header = Header Format [Element]
+data Header = Header { hFormat :: Format
+                     , hElems :: [Element] }
   deriving (Show)
 
 data Format = ASCII      -- ^ ASCII
@@ -47,6 +48,6 @@ data Scalar = CharS Int8
             | UshortS Word16
             | IntS Int
             | UintS Word32
-            | FloatS Float
+            | FloatS { getFloat :: Float }
             | DoubleS Double
             deriving (Show)

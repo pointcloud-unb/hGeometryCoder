@@ -7,6 +7,10 @@ format ascii 1.0
     property uchar red
     property uchar green
     property uchar blue
+  element vertex2 10
+    property float x2
+    property float y2
+    property float z2
 end_header
 223 255 214 0 140 0
 223 255 215 96 65 45
@@ -18,4 +22,14 @@ end_header
 223 255 221 151 118 101
 226 255 211 57 24 7
 227 255 211 47 28 14
+123 155 114
+123 155 115
+123 155 116
+123 155 117
+123 155 118
+123 155 119
+123 155 120
+123 155 121
+126 155 111
+127 155 111
 
