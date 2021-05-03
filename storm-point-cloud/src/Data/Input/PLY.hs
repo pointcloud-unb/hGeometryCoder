@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Data.PLY
+module Data.Input.PLY
   ( parsePLY
   , parsePLY'
   ) where
@@ -8,8 +8,8 @@ module Data.PLY
 import qualified Data.ByteString as B (ByteString)
 import Data.Attoparsec.ByteString.Char8 hiding (char)
 
-import Data.PLY.Parser
-import Data.PLY.Types
+import Data.Input.Parser
+import Data.Input.Types
 import Control.Monad (forM, join)
 
 parsePLY :: B.ByteString -> Either String PLY

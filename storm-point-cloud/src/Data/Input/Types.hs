@@ -1,4 +1,4 @@
-module Data.PLY.Types where
+module Data.Input.Types where
 
 import Data.ByteString (ByteString)
 import Data.Int (Int8, Int16)

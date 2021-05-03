@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Data.PLY.Parser where
+module Data.Input.Parser where
 
 import Control.Applicative
 import Data.Attoparsec.ByteString.Char8 hiding (char)
@@ -8,7 +8,7 @@ import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
 import Data.Vector (Vector, fromList, replicateM)
 
-import Data.PLY.Types
+import Data.Input.Types
 
 
 -- * ASCII parsers
