@@ -50,11 +50,11 @@ instance Eq ImageSparse where
   (ImageSparse pixel_list_1 _) ==
     (ImageSparse pixel_list_2 _) = pixel_list_1 == pixel_list_2
 
-addPixel :: ImageSparse -> Pixel -> ImageSparse
-addPixel (ImageSparse list a) pixel = ImageSparse (list ++ [pixel]) a
+addPixelToSparse :: ImageSparse -> Pixel -> ImageSparse
+addPixelToSparse (ImageSparse list a) pixel = ImageSparse (list ++ [pixel]) a
 
-removePixel :: ImageSparse -> Pixel -> ImageSparse
-removePixel (ImageSparse list a) pixel = ImageSparse (delete pixel list) a
+removePixelToSparse :: ImageSparse -> Pixel -> ImageSparse
+removePixelToSparse (ImageSparse list a) pixel = ImageSparse (delete pixel list) a
 
 -- 2D Matrix
 type Presence = Bool
@@ -65,6 +65,14 @@ type ImageRaster = Matrix Presence
 
 emptyMatrix :: Side -> ImageRaster
 emptyMatrix s = matrix s s (\(i, j) -> False)
+
+removePixelToRaster :: ImageRaster -> Coordinate -> Coordinate -> ImageRaster
+removePixelToRaster m x y = setElem False (x, y) m
+
+addPixelToRaster :: ImageRaster -> Coordinate -> Coordinate -> ImageRaster
+addPixelToRaster m x y = setElem True (x, y) m
+
+-- Transforming images
 
 sparseToRaster :: ImageSparse -> ImageRaster
 sparseToRaster (ImageSparse ps s) = foldl check (emptyMatrix s) ps
@@ -80,10 +88,5 @@ buildPixelList y (l:ls)= fillByLine l 1 ++ buildPixelList (y + 1) ls
     fillByLine [] _ = []
     fillByLine (e:es) x = if e then Pixel y x : fillByLine es (x + 1) else fillByLine es (x + 1)
 
-removePixelToRaster :: ImageRaster -> Coordinate -> Coordinate -> ImageRaster
-removePixelToRaster m x y = setElem False (x, y) m
-
-addPixelToRaster :: ImageRaster -> Coordinate -> Coordinate -> ImageRaster
-addPixelToRaster m x y = setElem True (x, y) m
 
 

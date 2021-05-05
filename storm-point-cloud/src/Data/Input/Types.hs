@@ -48,6 +48,6 @@ data Scalar = CharS Int8
             | UshortS Word16
             | IntS Int
             | UintS Word32
-            | FloatS { getFloat :: Float }
+            | FloatS Float
             | DoubleS Double
             deriving (Show)

@@ -26,6 +26,7 @@ dependencies:
 - vector
 - text
 - matrix
+- bitstream
 library:
   source-dirs: src
 

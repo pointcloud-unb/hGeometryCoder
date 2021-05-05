@@ -10,6 +10,9 @@ import Data.Vector (Vector, fromList, replicateM)
 
 import Data.Input.Types
 
+e = [Element {elName = "faces", elNum = 5, elProps = [ScalarProperty {sPropType = FloatT, sPropName = "x2"},ScalarProperty {sPropType = FloatT, sPropName = "y2"}]},Element {elName = "vertexCoisa", elNum = 10, elProps = [ScalarProperty {sPropType = FloatT, sPropName = "x"},ScalarProperty {sPropType = FloatT, sPropName = "y"},ScalarProperty {sPropType = FloatT, sPropName = "z"},ScalarProperty {sPropType = UcharT, sPropName = "red"},ScalarProperty {sPropType = UcharT, sPropName = "green"},ScalarProperty {sPropType = UcharT, sPropName = "blue"}]}]
+
+vertex = "vertex" :: ByteString
 
 -- * ASCII parsers
 -- | Parse a given element data.

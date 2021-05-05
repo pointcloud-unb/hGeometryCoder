@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ae9ff5f94f04372bfd0bc2b14cd72bf6b6dea06cb69270db3234620cb86d74eb
+-- hash: c8d1e7aea55786ef54981310951b7e3f1e66446e9ac9b6f71dccabd9ddf392c9
 
 name:           storm-point-cloud
 version:        0.1.0.0
@@ -32,8 +32,9 @@ library
       Data.Input.Types
       Data.Structures.Image
       Data.Structures.PointCloud
+      Data.Structures.Tree
       Data.Utils
-      Lib
+      Dyadic
   other-modules:
       Paths_storm_point_cloud
   hs-source-dirs:
@@ -41,6 +42,7 @@ library
   build-depends:
       attoparsec
     , base >=4.7 && <5
+    , bitstream
     , bytestring
     , matrix
     , text
@@ -57,6 +59,7 @@ executable storm-point-cloud-exe
   build-depends:
       attoparsec
     , base >=4.7 && <5
+    , bitstream
     , bytestring
     , matrix
     , storm-point-cloud
@@ -75,6 +78,7 @@ test-suite storm-point-cloud-test
   build-depends:
       attoparsec
     , base >=4.7 && <5
+    , bitstream
     , bytestring
     , matrix
     , storm-point-cloud
