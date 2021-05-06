@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c8d1e7aea55786ef54981310951b7e3f1e66446e9ac9b6f71dccabd9ddf392c9
+-- hash: ed274d805393109e4b7879b75c5c127a54ac8e7d0d74f9a9bc473fe555c65133
 
 name:           storm-point-cloud
 version:        0.1.0.0
@@ -42,7 +42,6 @@ library
   build-depends:
       attoparsec
     , base >=4.7 && <5
-    , bitstream
     , bytestring
     , matrix
     , text
@@ -59,7 +58,6 @@ executable storm-point-cloud-exe
   build-depends:
       attoparsec
     , base >=4.7 && <5
-    , bitstream
     , bytestring
     , matrix
     , storm-point-cloud
@@ -78,7 +76,6 @@ test-suite storm-point-cloud-test
   build-depends:
       attoparsec
     , base >=4.7 && <5
-    , bitstream
     , bytestring
     , matrix
     , storm-point-cloud

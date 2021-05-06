@@ -1,7 +1,7 @@
 module Data.Structures.PointCloud where
 
 import Data.List
-import qualified Data.Structures.Image as Image
+import qualified Data.Structures.Image as I
 
 -- Voxel type
 type Coordinate = Int
@@ -101,16 +101,22 @@ addVoxel (PointCloud list a b) voxel = PointCloud (list ++ [voxel]) a b
 removeVoxel :: PointCloud -> Voxel -> PointCloud
 removeVoxel (PointCloud list a b) voxel = PointCloud (delete voxel list) a b
 
-slicePointCloud :: Axis -> PointCloud -> (Coordinate, Coordinate) -> Image.ImageSparse
-slicePointCloud X (PointCloud l s b) (init, end) = Image.ImageSparse (sliceToPixelList X $ filter (\(Voxel x _ _) -> x >= init && x < end) l) s
+slicePointCloud :: Axis -> PointCloud -> Coordinate -> (PointCloud, PointCloud)
+slicePointCloud X (PointCloud v s b) center = (PointCloud (filter (\(Voxel x _ _) -> x <= center) v) s b, PointCloud (filter (\(Voxel x _ _) -> x > center) v) s b)
+slicePointCloud Y (PointCloud v s b) center = (PointCloud (filter (\(Voxel _ y _) -> y <= center) v) s b, PointCloud (filter (\(Voxel _ y _) -> y > center) v) s b)
+slicePointCloud Z (PointCloud v s b) center = (PointCloud (filter (\(Voxel _ _ z) -> z <= center) v) s b, PointCloud (filter (\(Voxel _ _ z) -> z > center) v) s b)
+{- slicePointCloud X (PointCloud l s b) (init, end) = Image.ImageSparse (sliceToPixelList X $ filter (\(Voxel x _ _) -> x >= init && x < end) l) s
 slicePointCloud Y (PointCloud l s b) (init, end) = Image.ImageSparse (sliceToPixelList Y $ filter (\(Voxel _ y _) -> y >= init && y < end) l) s
-slicePointCloud Z (PointCloud l s b) (init, end) = Image.ImageSparse (sliceToPixelList Z $ filter (\(Voxel _ _ z) -> z >= init && z < end) l) s
+slicePointCloud Z (PointCloud l s b) (init, end) = Image.ImageSparse (sliceToPixelList Z $ filter (\(Voxel _ _ z) -> z >= init && z < end) l) s -}
 
-sliceToPixelList :: Axis -> [Voxel] -> [Image.Pixel]
+sliceToSilhoutte :: Axis -> PointCloud -> I.ImageSparse
+sliceToSilhoutte a (PointCloud v s b) = I.ImageSparse (sliceToPixelList a v) s
+
+sliceToPixelList :: Axis -> [Voxel] -> [I.Pixel]
 sliceToPixelList _ [] = []
-sliceToPixelList X (Voxel x y z:vs) = Image.Pixel (y + 1) (z + 1) : sliceToPixelList X vs
-sliceToPixelList Y (Voxel x y z:vs) = Image.Pixel (x + 1) (z + 1) : sliceToPixelList Y vs
-sliceToPixelList Z (Voxel x y z:vs) = Image.Pixel (x + 1) (y + 1) : sliceToPixelList Z vs
+sliceToPixelList X (Voxel x y z:vs) = I.Pixel (y + 1) (z + 1) : sliceToPixelList X vs
+sliceToPixelList Y (Voxel x y z:vs) = I.Pixel (x + 1) (z + 1) : sliceToPixelList Y vs
+sliceToPixelList Z (Voxel x y z:vs) = I.Pixel (x + 1) (y + 1) : sliceToPixelList Z vs
 
 {- addSliceToPointCloud :: Axis -> Coordinate -> Slice -> PointCloud -> PointCloud
 addSliceToPointCloud X c (ImageSparse ps s') (PointCloud vs s) = PointCloud (vs ++ (map (buildVoxel c) ps)) s
