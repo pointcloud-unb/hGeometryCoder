@@ -43,7 +43,7 @@ instance Ord Pixel where
 
 -- Image Sparced type
 data ImageSparse = ImageSparse { sPixels :: [Pixel]
-                                    , sSide :: Int}
+                               , sSide   :: Int }
   deriving (Show)
 
 instance Eq ImageSparse where

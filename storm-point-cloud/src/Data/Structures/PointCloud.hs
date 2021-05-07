@@ -5,7 +5,9 @@ import qualified Data.Structures.Image as I
 
 -- Voxel type
 type Coordinate = Int
-data Voxel = Voxel Coordinate Coordinate Coordinate
+data Voxel = Voxel { getX :: Coordinate
+                   , getY :: Coordinate
+                   , getZ :: Coordinate }
   deriving(Show)
 
 
@@ -56,14 +58,14 @@ instance Ord Voxel where
       else
         x1 >= x2
 
-getX :: Voxel -> Coordinate
-getX (Voxel x y z) = x
+-- getX :: Voxel -> Coordinate
+-- getX (Voxel x y z) = x
 
-getY :: Voxel -> Coordinate
-getY (Voxel x y z) = y
+-- getY :: Voxel -> Coordinate
+-- getY (Voxel x y z) = y
 
-getZ :: Voxel -> Coordinate
-getZ (Voxel x y z) = z
+-- getZ :: Voxel -> Coordinate
+-- getZ (Voxel x y z) = z
 
 maxLimit :: [Voxel] -> (Int, Int, Int)
 maxLimit v = (maximum $ map getX v, maximum $ map getY v, maximum $ map getZ v)
@@ -76,8 +78,8 @@ largestDimension (Voxel x y z) = maximum [x,y,z]
 
 -- Point Cloud type
 data PointCloud = PointCloud { pcVoxels :: [Voxel]
-                                  , pcSide :: Int
-                                  , nBits :: Int}
+                             , pcSide   :: Int
+                             , nBits    :: Int}
   deriving (Show)
 
 --data Slice = Image.ImageRaster | Image.ImageSparse
@@ -101,22 +103,41 @@ addVoxel (PointCloud list a b) voxel = PointCloud (list ++ [voxel]) a b
 removeVoxel :: PointCloud -> Voxel -> PointCloud
 removeVoxel (PointCloud list a b) voxel = PointCloud (delete voxel list) a b
 
-slicePointCloud :: Axis -> PointCloud -> Coordinate -> (PointCloud, PointCloud)
-slicePointCloud X (PointCloud v s b) center = (PointCloud (filter (\(Voxel x _ _) -> x <= center) v) s b, PointCloud (filter (\(Voxel x _ _) -> x > center) v) s b)
-slicePointCloud Y (PointCloud v s b) center = (PointCloud (filter (\(Voxel _ y _) -> y <= center) v) s b, PointCloud (filter (\(Voxel _ y _) -> y > center) v) s b)
-slicePointCloud Z (PointCloud v s b) center = (PointCloud (filter (\(Voxel _ _ z) -> z <= center) v) s b, PointCloud (filter (\(Voxel _ _ z) -> z > center) v) s b)
-{- slicePointCloud X (PointCloud l s b) (init, end) = Image.ImageSparse (sliceToPixelList X $ filter (\(Voxel x _ _) -> x >= init && x < end) l) s
-slicePointCloud Y (PointCloud l s b) (init, end) = Image.ImageSparse (sliceToPixelList Y $ filter (\(Voxel _ y _) -> y >= init && y < end) l) s
-slicePointCloud Z (PointCloud l s b) (init, end) = Image.ImageSparse (sliceToPixelList Z $ filter (\(Voxel _ _ z) -> z >= init && z < end) l) s -}
+slicePointCloud :: Axis -> Coordinate -> PointCloud -> (PointCloud, PointCloud)
+slicePointCloud axis cutIndex (PointCloud v s b) =
+  (PointCloud (filter (f (<=) axis cutIndex) v) s b,
+   PointCloud (filter (f (>) axis cutIndex) v) s b)
+  where
+    f :: (Coordinate -> Coordinate -> Bool) -> Axis -> Coordinate -> Voxel -> Bool
+    f op X cutIndex v = (getX v) `op` cutIndex
+    f op Y cutIndex v = (getY v) `op` cutIndex
+    f op Z cutIndex v = (getZ v) `op` cutIndex
+
+
+type Range = (Int, Int)
+
+slicePointCloud' :: Axis -> Range -> PointCloud -> PointCloud
+slicePointCloud' axis r (PointCloud v s b) =
+  PointCloud (filter (f axis r) v) s b
+  where
+    f :: Axis -> Range -> Voxel -> Bool
+    f X (a,b) v = (getX v) >= a && (getX v) <= b
+    f Y (a,b) v = (getY v) >= a && (getY v) <= b
+    f Z (a,b) v = (getZ v) >= a && (getZ v) <= b
+
 
 sliceToSilhoutte :: Axis -> PointCloud -> I.ImageSparse
-sliceToSilhoutte a (PointCloud v s b) = I.ImageSparse (sliceToPixelList a v) s
+sliceToSilhoutte a (PointCloud v s _) = I.ImageSparse (sliceToPixelList a v) s
+
+
+
+--g :: Axis -> PointCloud -> Coordinate -> I.ImageSparse
 
 sliceToPixelList :: Axis -> [Voxel] -> [I.Pixel]
 sliceToPixelList _ [] = []
-sliceToPixelList X (Voxel x y z:vs) = I.Pixel (y + 1) (z + 1) : sliceToPixelList X vs
-sliceToPixelList Y (Voxel x y z:vs) = I.Pixel (x + 1) (z + 1) : sliceToPixelList Y vs
-sliceToPixelList Z (Voxel x y z:vs) = I.Pixel (x + 1) (y + 1) : sliceToPixelList Z vs
+sliceToPixelList X (Voxel _ y z : vs) = I.Pixel (y + 1) (z + 1) : sliceToPixelList X vs
+sliceToPixelList Y (Voxel x y z : vs) = I.Pixel (x + 1) (z + 1) : sliceToPixelList Y vs
+sliceToPixelList Z (Voxel x y z : vs) = I.Pixel (x + 1) (y + 1) : sliceToPixelList Z vs
 
 {- addSliceToPointCloud :: Axis -> Coordinate -> Slice -> PointCloud -> PointCloud
 addSliceToPointCloud X c (ImageSparse ps s') (PointCloud vs s) = PointCloud (vs ++ (map (buildVoxel c) ps)) s

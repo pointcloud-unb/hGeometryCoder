@@ -13,13 +13,13 @@ type Label = ByteString
 
 filterVertex :: PLY -> Either String PLY
 filterVertex (PLY h d) = do
-                        (before, current) <- getUntilLabel (hElems h) "vertex" 0
-                        return $ PLY h $ take current $ drop before d
+                        (before, current, element) <- getUntilLabel (hElems h) "vertex" 0
+                        return $ PLY (Header (hFormat h) [element]) $ take current $ drop before d
 
-getUntilLabel :: [Element] -> Label -> Int -> Either String (Int, Int)
+getUntilLabel :: [Element] -> Label -> Int -> Either String (Int, Int, Element)
 getUntilLabel [] l _ = Left $ "Didn't find label " ++ unpack l ++ " in getUntilLabel"
 getUntilLabel (e:es) l c
-  | elName e == l = Right (c, elNum e)
+  | elName e == l = Right (c, elNum e, e)
   | otherwise     = getUntilLabel es l (c + elNum e)
 
 getPointCloud :: PLY -> Either String PointCloud
@@ -36,7 +36,7 @@ computeNBits :: Int -> Int
 computeNBits n = round (logBase 2 (fromIntegral n :: Float)) :: Int
 
 computePower2 :: Int -> Int
-computePower2 n = head $ dropWhile (<= n) [ 2^i - 1 | i <- [0..]]
+computePower2 n = head $ dropWhile (< n) [ 2^i  | i <- [0..]]
 
 computePCLimit :: [Voxel] -> Int
 computePCLimit v = maximum [maxX - minX, maxY - minY, maxZ - minZ]
