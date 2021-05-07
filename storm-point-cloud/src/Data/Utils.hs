@@ -36,7 +36,7 @@ computeNBits :: Int -> Int
 computeNBits n = round (logBase 2 (fromIntegral n :: Float)) :: Int
 
 computePower2 :: Int -> Int
-computePower2 n = head $ dropWhile (< n) [ 2^i  | i <- [0..]]
+computePower2 n = head $ dropWhile (< n) [ 2^i | i <- [0..]]
 
 computePCLimit :: [Voxel] -> Int
 computePCLimit v = maximum [maxX - minX, maxY - minY, maxZ - minZ]

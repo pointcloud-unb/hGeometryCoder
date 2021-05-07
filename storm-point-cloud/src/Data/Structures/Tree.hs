@@ -31,3 +31,9 @@ triForceTree (a,b)
                  (triForceTree  (a, b'))
                  (triForceTree  (b' + 1, b))
   where b' = (b + a) `div` 2
+
+-- pc = fromRight (PointCloud [] 0 0) $ unsafePerformIO main
+-- f = \pc range -> sparseToRaster . sliceToSilhoutte X . slicePointCloud' X range $  pc
+-- range = (0,3)
+-- f <$> rangeTree range
+-- (fmap.fmap) f $ triForceTree range
