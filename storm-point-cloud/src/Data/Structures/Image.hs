@@ -2,6 +2,7 @@ module Data.Structures.Image where
 
 import Data.List
 import Data.Matrix
+import qualified Data.Set as S
 
 -- Pixel type -- MEMORY RELATED
 type Coordinate = Int
@@ -42,19 +43,19 @@ instance Ord Pixel where
         x1 >= x2
 
 -- Image Sparced type
-data ImageSparse = ImageSparse { sPixels :: [Pixel]
+data ImageSparse = ImageSparse { sPixels :: S.Set Pixel
                                , sSide   :: Int }
   deriving (Show)
 
 instance Eq ImageSparse where
-  (ImageSparse pixel_list_1 _) ==
-    (ImageSparse pixel_list_2 _) = pixel_list_1 == pixel_list_2
+  (ImageSparse pixel_set_1 _) ==
+    (ImageSparse pixel_set_2 _) = pixel_set_1 == pixel_set_2
 
 addPixelToSparse :: ImageSparse -> Pixel -> ImageSparse
-addPixelToSparse (ImageSparse list a) pixel = ImageSparse (list ++ [pixel]) a
+addPixelToSparse (ImageSparse set a) pixel = ImageSparse (S.insert pixel set) a
 
 removePixelToSparse :: ImageSparse -> Pixel -> ImageSparse
-removePixelToSparse (ImageSparse list a) pixel = ImageSparse (delete pixel list) a
+removePixelToSparse (ImageSparse set a) pixel = ImageSparse (S.delete pixel set) a
 
 -- 2D Matrix
 type Presence = Bool
@@ -79,7 +80,7 @@ sparseToRaster (ImageSparse ps s) = foldl check (emptyMatrix s) ps
   where check m (Pixel x y) = addPixelToRaster m x y
 
 rasterToSparse :: ImageRaster -> ImageSparse
-rasterToSparse m = ImageSparse (buildPixelList 1 $ toLists m) (nrows m)
+rasterToSparse m = ImageSparse (S.fromList (buildPixelList 1 $ toLists m)) (nrows m)
 
 buildPixelList :: Mline -> [[Presence]] -> [Pixel]
 buildPixelList y [] = []

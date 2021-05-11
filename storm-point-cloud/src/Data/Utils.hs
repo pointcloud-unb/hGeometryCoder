@@ -8,6 +8,7 @@ import Control.Applicative
 import Control.Monad (join)
 import Data.List (findIndex)
 import Data.Either
+import qualified Data.Set as S
 
 type Label = ByteString
 
@@ -27,7 +28,7 @@ getPointCloud ply = getCoordinatesIndexes (plyHeader ply) >>= extractVoxels (ply
 
 extractVoxels :: [Values] -> (Int, Int, Int) -> Either String PointCloud
 extractVoxels dss (x,y,z) =
-  (\v -> PointCloud v (side v) (computeNBits (side v + 1))) <$> sequence ((\ds -> Voxel <$> g (ds !! x) <*> g (ds !! y) <*> g (ds !! z)) <$> dss)
+  (\v -> PointCloud (S.fromList v) (side v) (computeNBits (side v + 1))) <$> sequence ((\ds -> Voxel <$> g (ds !! x) <*> g (ds !! y) <*> g (ds !! z)) <$> dss)
   where g (FloatS n) = Right (round n :: Int)
         g _ = Left "Data is not float"
         side v = computePower2 $ computePCLimit' v

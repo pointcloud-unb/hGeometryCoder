@@ -13,6 +13,10 @@ data BinTree a = Node { nodeValue :: a
                | Leaf { leafValue :: a}
                deriving (Eq, Show, Functor)
 
+getValue :: BinTree a -> a
+getValue (Node nV l r) = nV
+getValue (Leaf lV) = lV
+
 rangeTree :: Range -> BinTree Range
 rangeTree (i, j)
   | i == j    = Leaf (i,j) 
@@ -32,6 +36,8 @@ triForceTree (a,b)
                  (triForceTree  (b' + 1, b))
   where b' = (b + a) `div` 2
 
+-- import Data.Either
+-- import System.IO.Unsafe
 -- pc = fromRight (PointCloud [] 0 0) $ unsafePerformIO main
 -- f = \pc range -> sparseToRaster . sliceToSilhoutte X . slicePointCloud' X range $  pc
 -- range = (0,3)
