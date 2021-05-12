@@ -115,7 +115,6 @@ slicePointCloud axis cutIndex (PointCloud v s b) =
     f op Y cutIndex v = getY v `op` cutIndex
     f op Z cutIndex v = getZ v `op` cutIndex
 
-
 slicePointCloud' :: Axis -> T.Range -> PointCloud -> PointCloud
 slicePointCloud' axis r (PointCloud v s b) =
   PointCloud (S.filter (f axis r) v) s b
