@@ -29,5 +29,4 @@ applyMask :: I.ImageRaster -> I.ImageRaster -> Matrix (Maybe Bool)
 applyMask = elementwise f
     where f v1 v2
             | not v1        = Nothing
-            | v2            = Just True
-            | otherwise     = Just False
+            | otherwise     = Just v2
