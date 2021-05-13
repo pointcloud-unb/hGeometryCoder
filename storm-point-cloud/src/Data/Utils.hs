@@ -2,7 +2,6 @@
 module Data.Utils where
   
 import Data.ByteString.Char8 (ByteString, unpack)
-import Data.Structures.PointCloud
 import Data.Input.Types
 import Control.Applicative
 import Control.Monad (join)
@@ -10,7 +9,11 @@ import Data.List (findIndex)
 import Data.Either
 import qualified Data.Set as S
 
+type Range = (Int, Int)
 type Label = ByteString
+
+data Axis = X | Y | Z
+  deriving (Show)
 
 filterVertex :: PLY -> Either String PLY
 filterVertex (PLY h d) = do
@@ -23,29 +26,11 @@ getUntilLabel (e:es) l c
   | elName e == l = Right (c, elNum e, e)
   | otherwise     = getUntilLabel es l (c + elNum e)
 
-getPointCloud :: PLY -> Either String PointCloud
-getPointCloud ply = getCoordinatesIndexes (plyHeader ply) >>= extractVoxels (plyData ply)
-
-extractVoxels :: [Values] -> (Int, Int, Int) -> Either String PointCloud
-extractVoxels dss (x,y,z) =
-  (\v -> PointCloud (S.fromList v) (side v) (computeNBits (side v + 1))) <$> sequence ((\ds -> Voxel <$> g (ds !! x) <*> g (ds !! y) <*> g (ds !! z)) <$> dss)
-  where g (FloatS n) = Right (round n :: Int)
-        g _ = Left "Data is not float"
-        side v = computePower2 $ computePCLimit' v
-
 computeNBits :: Int -> Int
 computeNBits n = round (logBase 2 (fromIntegral n :: Float)) :: Int
 
 computePower2 :: Int -> Int
 computePower2 n = head $ dropWhile (< n) [ 2^i | i <- [0..]]
-
-computePCLimit :: [Voxel] -> Int
-computePCLimit v = maximum [maxX - minX, maxY - minY, maxZ - minZ]
-  where (maxX, maxY, maxZ) = maxLimit v
-        (minX, minY, minZ) = minLimit v
-
-computePCLimit' :: [Voxel] -> Int
-computePCLimit' = foldr (max . largestDimension) 0
 
 getCoordinatesIndexes :: Header -> Either String (Int, Int, Int)
 getCoordinatesIndexes (Header _ els) = do
@@ -61,4 +46,4 @@ findPropsFromLabel (e:es) l
 fromLabel :: [Property] -> Label -> Either String Int
 fromLabel ps axis = maybe (Left errorMsg) Right mIndex
   where mIndex = findIndex (\p -> sPropName p == axis) ps
-        errorMsg = "Didn't find label " ++ unpack axis
+        errorMsg = "Didn't find label " ++ unpack axis ++ "in fromLabel"

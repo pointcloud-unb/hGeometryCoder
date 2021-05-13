@@ -3,7 +3,8 @@ module Data.Structures.PointCloud where
 import Data.List
 import qualified Data.Structures.Image as I
 import qualified Data.Set as S
-import qualified Data.Structures.Tree as T
+import Data.Utils
+import Data.Input.Types
 
 -- Voxel type
 type Coordinate = Int
@@ -92,9 +93,6 @@ instance Semigroup PointCloud where
 instance Monoid PointCloud where
   mempty = PointCloud S.empty 0 0
 
-data Axis = X | Y | Z
-  deriving (Show)
-
 instance Eq PointCloud where
   (PointCloud voxel_set_1 _ _) ==
     (PointCloud voxel_set_2 _ _) = voxel_set_1 == voxel_set_2
@@ -104,6 +102,24 @@ addVoxel (PointCloud set a b) voxel = PointCloud (S.insert voxel set) a b
 
 removeVoxel :: PointCloud -> Voxel -> PointCloud
 removeVoxel (PointCloud set a b) voxel = PointCloud (S.delete voxel set) a b
+
+getPointCloud :: PLY -> Either String PointCloud
+getPointCloud ply = getCoordinatesIndexes (plyHeader ply) >>= extractVoxels (plyData ply)
+
+extractVoxels :: [Values] -> (Int, Int, Int) -> Either String PointCloud
+extractVoxels dss (x,y,z) =
+  (\v -> PointCloud (S.fromList v) (side v) (computeNBits (side v + 1))) <$> sequence ((\ds -> Voxel <$> g (ds !! x) <*> g (ds !! y) <*> g (ds !! z)) <$> dss)
+  where g (FloatS n) = Right (round n :: Int)
+        g _ = Left "Data is not float"
+        side v = computePower2 $ computePCLimit' v
+
+computePCLimit :: [Voxel] -> Int
+computePCLimit v = maximum [maxX - minX, maxY - minY, maxZ - minZ]
+  where (maxX, maxY, maxZ) = maxLimit v
+        (minX, minY, minZ) = minLimit v
+
+computePCLimit' :: [Voxel] -> Int
+computePCLimit' = foldr (max . largestDimension) 0
 
 slicePointCloud :: Axis -> Coordinate -> PointCloud -> (PointCloud, PointCloud)
 slicePointCloud axis cutIndex (PointCloud v s b) =
@@ -115,11 +131,11 @@ slicePointCloud axis cutIndex (PointCloud v s b) =
     f op Y cutIndex v = getY v `op` cutIndex
     f op Z cutIndex v = getZ v `op` cutIndex
 
-slicePointCloud' :: Axis -> T.Range -> PointCloud -> PointCloud
+slicePointCloud' :: Axis -> Range -> PointCloud -> PointCloud
 slicePointCloud' axis r (PointCloud v s b) =
   PointCloud (S.filter (f axis r) v) s b
   where
-    f :: Axis -> T.Range -> Voxel -> Bool
+    f :: Axis -> Range -> Voxel -> Bool
     f X (a,b) v = getX v >= a && getX v <= b
     f Y (a,b) v = getY v >= a && getY v <= b
     f Z (a,b) v = getZ v >= a && getZ v <= b
@@ -135,10 +151,6 @@ sliceToPixelList _ [] = S.empty
 sliceToPixelList X (Voxel _ y z : vs) = S.fromList [I.Pixel (y + 1) (z + 1)] `S.union` sliceToPixelList X vs
 sliceToPixelList Y (Voxel x y z : vs) = S.fromList [I.Pixel (x + 1) (z + 1)] `S.union` sliceToPixelList Y vs
 sliceToPixelList Z (Voxel x y z : vs) = S.fromList [I.Pixel (x + 1) (y + 1)] `S.union` sliceToPixelList Z vs
-
-makeTriForce :: Axis -> PointCloud -> Either String (T.BinTree (T.BinTree I.ImageSparse))
-makeTriForce axis pc = Right (fmap (f pc) <$> T.triForceTree (0, pcSide pc - 1))
-  where f = \pc range -> sliceToSilhoutte X . slicePointCloud' X range $ pc
 
 {- addSliceToPointCloud :: Axis -> Coordinate -> Slice -> PointCloud -> PointCloud
 addSliceToPointCloud X c (ImageSparse ps s') (PointCloud vs s) = PointCloud (vs ++ (map (buildVoxel c) ps)) s
