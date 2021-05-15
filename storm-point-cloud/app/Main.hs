@@ -1,17 +1,81 @@
 module Main where
 
-import Data.Utils -- (getPointCloud)
+import Data.Utils
 import Dyadic
-import Data.Input.PLY -- (parsePLY)
+import Data.Input.PLY
 import qualified Data.ByteString as B (readFile, writeFile, pack)
 import Bitstream
 import System.Exit (exitSuccess, exitFailure)
+import System.Environment
+
+type Format = String
+data Args = Encode { inputPath :: FilePath
+                    , axis :: Axis}
+            | Decode { inputPath :: FilePath}
+            | Error {errorMessage :: String}
 
 main :: IO ()
 main = do
-  pcData <- B.readFile "test3.ply"
+  options <- parseArgs <$> getArgs
+  case options of
+    (Encode input axis) -> do
+      putStrLn $ "Parsing " ++ input
+      plyData <- B.readFile input
+      putStrLn $ "Encoding " ++ input
+      (Right encodedBin) <- pure $ buildEDX =<< encodeGeometry axis =<< parsePLY plyData
+      let compressedFileName = filePathEDX input
+      putStrLn $ "Encoding completed! Writing " ++ compressedFileName
+      B.writeFile compressedFileName (B.pack encodedBin)
+      exitSuccess
+    (Decode input) -> do
+      putStrLn "Decoder missing!"
+      exitSuccess
+    (Error mError) -> do
+      putStrLn mError
+      exitFailure
+
+filePathEDX :: FilePath -> FilePath
+filePathEDX f = (\x -> x ++ ".edx") $ fst $ span (/= '.') f
+
+checkArgsDecode :: FilePath -> Args
+checkArgsDecode fp
+  | checkFormat ".edx" fp   = Decode fp
+  | otherwise               = Error "Invalid input file! You must use .edx!"
+
+checkArgsEncode :: FilePath -> String -> Args
+checkArgsEncode fp axis
+  | cPLY && cAxis axis = Encode fp (string2Axis axis)
+  | not cPLY           = Error "Invalid input file! You must use .ply!"
+  | otherwise          = Error "Invalid axis! You must use X or Y or Z!"
+  where cPLY = checkFormat ".ply" fp
+
+checkFormat :: Format -> FilePath -> Bool
+checkFormat fm fp = (\x -> "." ++ x == fm) $ snd $ span (/= '.') fp
+
+string2Axis :: String -> Axis
+string2Axis "X" = X
+string2Axis "Y" = Y
+string2Axis "Z" = Z
+
+cAxis :: String -> Bool
+cAxis "X" = True
+cAxis "Y" = True
+cAxis "Z" = True
+cAxis _ = False
+
+parseArgs :: [String] -> Args
+parseArgs (operation:input:arg1:_)
+  | operation == "-e" = checkArgsEncode input arg1
+  | operation == "-d" = checkArgsDecode input
+  | otherwise         = Error "Invalid operation!"
+parseArgs _ = Error "Invalid arguments!"
+
+mainDebug :: IO ()
+mainDebug = do
+  let file = "test3.ply"
+  pcData <- B.readFile file
   putStrLn $ "Encoding..."
-  (Right encodedBin) <- pure $ buildEDX =<< encodeGeometry X =<< parsePLY' pcData
+  (Right encodedBin) <- pure $ buildEDX =<< encodeGeometry X =<< parsePLY pcData
   putStrLn $ "Encoding completed!"
-  B.writeFile "test.edx" (B.pack encodedBin)
+  B.writeFile (filePathEDX file) (B.pack encodedBin)
   return $ ()

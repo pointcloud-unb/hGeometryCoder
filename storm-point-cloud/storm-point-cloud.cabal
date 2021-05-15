@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b7cc8511da93e4e460da13228f9647c7aca6e40a609abde3fbe5e0462e498f63
+-- hash: 5f62c36d0f782e5c4c96909a1e26dd2f07efc2139022d5a2c8002b1e3be58c1a
 
 name:           storm-point-cloud
 version:        0.1.0.0
@@ -32,8 +32,10 @@ library
       Data.Input.PLY
       Data.Input.Types
       Data.Structures.Image
+      Data.Structures.Pixel
       Data.Structures.PointCloud
       Data.Structures.Tree
+      Data.Structures.Voxel
       Data.Utils
       Dyadic
   other-modules:

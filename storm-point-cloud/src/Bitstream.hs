@@ -5,22 +5,24 @@ import qualified Data.ByteString as B
 import Data.Word
 import Data.Bits
 import Data.List
+import Data.Utils
 
 type Bit = Word8
 type Byte = Word8
 type Bin = [Bit]
 type Padding = Word8
+type LateralInfo = Word8
 type NumByte = Int
 
-buildEDX :: (Bin, Int) -> Either String Bin
-buildEDX = uncurry writeEDX
+buildEDX :: (Bin, PointCloudSize, Axis) -> Either String Bin
+buildEDX (b, s, a) = writeEDX b s a
 
-writeEDX :: Bin -> Int -> Either String Bin
-writeEDX _ 0 = Left "Side without proper size!"
-writeEDX [] _ = Left "Encoding failed!"
-writeEDX bin side = do
+writeEDX :: Bin -> PointCloudSize -> Axis -> Either String Bin
+writeEDX _ 0 _ = Left "Size without proper size!"
+writeEDX [] _ _ = Left "Encoding failed!"
+writeEDX bin size axis = do
     let (padding, dataBin) = writeEDXData [] bin
-    headerBin <- writeEDXHeader 2 (fromIntegral side :: Word16) padding
+    headerBin <- writeEDXHeader 2 (fromIntegral size :: Word16) (combinePaddingWithAxis padding axis)
     Right $ headerBin ++ dataBin
 
 addPadding :: NumByte -> Bin -> Either String Bin
@@ -31,7 +33,7 @@ addPadding nBytes bits
         where nBits = nBytes * 8
               bitsSize = Prelude.length bits
               difference = nBits - bitsSize
-              padding = unfoldr (\b -> if b == 0 then Nothing else Just (0, b - 1)) difference
+              padding = replicate difference 0
 
 integral2BitList :: (FiniteBits b) => b -> Bin
 integral2BitList x = reverse $ map (f . testBit x) [0..(finiteBitSize x - 1)]
@@ -42,10 +44,10 @@ bitListWithPadding nBytes number = do
     binary <- addPadding nBytes (integral2BitList number)
     Right $ transcodeSide nBytes binary
 
-writeEDXHeader :: (FiniteBits b) => NumByte -> b -> Padding -> Either String Bin
-writeEDXHeader nBytes side padding = do
-    binary <- bitListWithPadding nBytes side
-    Right $ binary ++ [padding]
+writeEDXHeader :: (FiniteBits b) => NumByte -> b -> LateralInfo -> Either String Bin
+writeEDXHeader nBytes size padAxis = do
+    binary <- bitListWithPadding nBytes size
+    Right $ padAxis : binary
 
 writeEDXData :: [Byte] -> Bin -> (Padding, Bin)
 writeEDXData tcoded bin
@@ -59,6 +61,14 @@ writeEDXData tcoded bin
 transcodeSide :: NumByte -> Bin -> [Byte]
 transcodeSide 0 _ = []
 transcodeSide nBytes bin = transcode (take 8 bin) : transcodeSide (nBytes - 1) (drop 8 bin)
+
+combinePaddingWithAxis :: Padding -> Axis -> LateralInfo
+combinePaddingWithAxis padding axis = (padding `shiftL` 4) .|. axis2Bin axis
+
+axis2Bin :: Axis -> Byte
+axis2Bin X = 0
+axis2Bin Y = 1
+axis2Bin Z = 2
 
 transcode :: Bin -> Byte
 transcode (b1:b2:b3:b4:b5:b6:b7:b8:_) =

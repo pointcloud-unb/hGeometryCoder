@@ -3,12 +3,13 @@
 
 module Data.Structures.Tree where
 
-
 import Data.Structures.Image
 import Data.Structures.PointCloud
 import Data.Utils
 
-type TriForce = BinTree Range
+type TriForceRange = BinTree Range
+type TriForceTree = BinTree (BinTree ImageSparse)
+type TriForce = BinTree ImageSparse
 
 data BinTree a = Node { nodeValue :: a
                       , left      :: BinTree a
@@ -26,11 +27,11 @@ rangeTree (i, j)
   | otherwise = Node (i,j) (rangeTree (i, j')) (rangeTree (j' + 1, j))
   where j' = (j + i) `div` 2
 
-rangeTriForce :: Range -> TriForce
+rangeTriForce :: Range -> TriForceRange
 rangeTriForce (a,b) = Node (a,b) (Leaf (a, b')) (Leaf (b' + 1, b))
     where b' = (b + a) `div` 2
 
-triForceTree :: Range -> BinTree TriForce
+triForceTree :: Range -> BinTree TriForceRange
 triForceTree (a,b)
   | b - a == 1 = Leaf (rangeTriForce (a,b))
   | otherwise  = Node
@@ -39,9 +40,9 @@ triForceTree (a,b)
                  (triForceTree  (b' + 1, b))
   where b' = (b + a) `div` 2
 
-pc2TriForce :: Axis -> PointCloud -> Either String (BinTree (BinTree ImageSparse), Int)
-pc2TriForce axis pc = Right (fmap (f pc) <$> triForceTree (0, pcSide pc - 1), pcSide pc)
-  where f = \pc range -> sliceToSilhoutte X . slicePointCloud' X range $ pc
+pc2TriForce :: Axis -> PointCloud -> Either String (TriForceTree, PointCloudSize)
+pc2TriForce axis pc = Right (fmap (f pc) <$> triForceTree (0, pcSize pc - 1), pcSize pc)
+  where f = \pc range -> sliceToSilhoutte axis . slicePointCloud' axis range $ pc
 
 -- import Data.Either
 -- import System.IO.Unsafe

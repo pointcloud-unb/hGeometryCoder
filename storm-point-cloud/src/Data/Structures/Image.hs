@@ -3,44 +3,8 @@ module Data.Structures.Image where
 import Data.List
 import Data.Matrix
 import qualified Data.Set as S
-
--- Pixel type -- MEMORY RELATED
-type Coordinate = Int
-data Pixel = Pixel Coordinate Coordinate
-    deriving(Show)
-
-instance Eq Pixel where
-    -- (==) Pixel -> Pixel -> Bool
-    (Pixel x1 y1) == (Pixel x2 y2) = (x1 == x2) && (y1 == y2)
-
-    -- (!=) Pixel -> Pixel -> Bool
-    (Pixel x1 y1) /= (Pixel x2 y2) = (x1 /= x2) || (y1 /= y2)
-
-instance Ord Pixel where
-  -- Less comparison
-  (Pixel x1 y1) < (Pixel x2 y2) 
-    = if x1 == x2 then
-         y1 < y2
-      else
-         x1 < x2
-  -- Less or Equal comparison
-  (Pixel x1 y1) <= (Pixel x2 y2) 
-    = if x1 == x2 then
-        y1 <= y2
-      else
-        x1 <= x2
-  -- Greater comparison
-  (Pixel x1 y1) > (Pixel x2 y2) 
-    = if x1 == x2 then
-        y1 > y2 
-      else
-        x1 > x2
-  -- Greater or Equal comparison
-  (Pixel x1 y1) >= (Pixel x2 y2) 
-    = if x1 == x2 then
-        y1 >= y2
-      else
-        x1 >= x2
+import Data.Structures.Pixel
+import Data.Utils
 
 -- Image Sparced type
 data ImageSparse = ImageSparse { sPixels :: S.Set Pixel
@@ -48,20 +12,19 @@ data ImageSparse = ImageSparse { sPixels :: S.Set Pixel
   deriving (Show)
 
 instance Eq ImageSparse where
-  (ImageSparse pixel_set_1 _) ==
-    (ImageSparse pixel_set_2 _) = pixel_set_1 == pixel_set_2
+  (ImageSparse pixel_set_1 s1) ==
+    (ImageSparse pixel_set_2 s2) = pixel_set_1 == pixel_set_2 && s1 == s2
 
 addPixelToSparse :: ImageSparse -> Pixel -> ImageSparse
-addPixelToSparse (ImageSparse set a) pixel = ImageSparse (S.insert pixel set) a
+addPixelToSparse (ImageSparse set side) pixel = ImageSparse (S.insert pixel set) side
 
 removePixelToSparse :: ImageSparse -> Pixel -> ImageSparse
-removePixelToSparse (ImageSparse set a) pixel = ImageSparse (S.delete pixel set) a
+removePixelToSparse (ImageSparse set side) pixel = ImageSparse (S.delete pixel set) side
 
 -- 2D Matrix
 type Presence = Bool
 type Side = Int
-type Mline = Int
--- Always working with square matrixes
+type MLine = Int
 type ImageRaster = Matrix Presence
 
 emptyMatrix :: Side -> ImageRaster
@@ -82,7 +45,7 @@ sparseToRaster (ImageSparse ps s) = foldl check (emptyMatrix s) ps
 rasterToSparse :: ImageRaster -> ImageSparse
 rasterToSparse m = ImageSparse (S.fromList (buildPixelList 1 $ toLists m)) (nrows m)
 
-buildPixelList :: Mline -> [[Presence]] -> [Pixel]
+buildPixelList :: MLine -> [[Presence]] -> [Pixel]
 buildPixelList y [] = []
 buildPixelList y (l:ls)= fillByLine l 1 ++ buildPixelList (y + 1) ls
   where 
