@@ -50,7 +50,7 @@ checkArgsEncode fp axis
   where cPLY = checkFormat ".ply" fp
 
 checkFormat :: Format -> FilePath -> Bool
-checkFormat fm fp = (\x -> "." ++ x == fm) $ snd $ span (/= '.') fp
+checkFormat fm fp = (== fm) $ snd $ span (/= '.') fp
 
 string2Axis :: String -> Axis
 string2Axis "X" = X
