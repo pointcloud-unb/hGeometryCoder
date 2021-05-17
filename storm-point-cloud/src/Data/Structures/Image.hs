@@ -31,26 +31,26 @@ emptyMatrix :: Side -> ImageRaster
 emptyMatrix s = matrix s s (\(i, j) -> False)
 
 removePixelToRaster :: ImageRaster -> Coordinate -> Coordinate -> ImageRaster
-removePixelToRaster m x y = setElem False (x, y) m
+removePixelToRaster m j i = setElem False (j, i) m
 
 addPixelToRaster :: ImageRaster -> Coordinate -> Coordinate -> ImageRaster
-addPixelToRaster m x y = setElem True (x, y) m
+addPixelToRaster m j i = setElem True (j, i) m
 
 -- Transforming images
 
 sparseToRaster :: ImageSparse -> ImageRaster
 sparseToRaster (ImageSparse ps s) = foldl check (emptyMatrix s) ps
-  where check m (Pixel x y) = addPixelToRaster m x y
+  where check m (Pixel j i) = addPixelToRaster m j i
 
 rasterToSparse :: ImageRaster -> ImageSparse
 rasterToSparse m = ImageSparse (S.fromList (buildPixelList 1 $ toLists m)) (nrows m)
 
 buildPixelList :: MLine -> [[Presence]] -> [Pixel]
-buildPixelList y [] = []
-buildPixelList y (l:ls)= fillByLine l 1 ++ buildPixelList (y + 1) ls
+buildPixelList i [] = []
+buildPixelList i (l:ls)= fillByLine l 1 ++ buildPixelList (i + 1) ls
   where 
     fillByLine [] _ = []
-    fillByLine (e:es) x = if e then Pixel y x : fillByLine es (x + 1) else fillByLine es (x + 1)
+    fillByLine (e:es) j = if e then Pixel i j : fillByLine es (j + 1) else fillByLine es (j + 1)
 
 
 

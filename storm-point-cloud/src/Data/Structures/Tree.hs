@@ -6,6 +6,7 @@ module Data.Structures.Tree where
 import Data.Structures.Image
 import Data.Structures.PointCloud
 import Data.Utils
+import Data.Matrix as M
 
 type TriForceRange = BinTree Range
 type TriForceTree = BinTree (BinTree ImageSparse)
@@ -26,6 +27,20 @@ rangeTree (i, j)
   | i == j    = Leaf (i,j)
   | otherwise = Node (i,j) (rangeTree (i, j')) (rangeTree (j' + 1, j))
   where j' = (j + i) `div` 2
+
+rangeSparseTree :: Range -> BinTree (Range, [Presence])
+rangeSparseTree (i, j)
+  | i == j    = Leaf ((i,j), [])
+  | otherwise = Node ((i,j), []) (rangeSparseTree (i, j')) (rangeSparseTree (j' + 1, j))
+        where j' = (j + i) `div` 2
+
+-- decoderNode :: Mask -> Child -> Binary -> AfterMasked
+decoderNode :: Mask -> [Presence] -> Bin -> ([Presence], Bin)
+decoderNode [] e rest = (e, rest)
+decoderNode (m:ms) e (b:bs)
+    | m         = decoderNode ms (e ++ [f b]) bs
+    | otherwise = decoderNode ms (e ++ [False]) (b:bs)
+        where f b = b == 1
 
 rangeTriForce :: Range -> TriForceRange
 rangeTriForce (a,b) = Node (a,b) (Leaf (a, b')) (Leaf (b' + 1, b))

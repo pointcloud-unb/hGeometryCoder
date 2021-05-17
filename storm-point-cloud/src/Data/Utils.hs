@@ -6,6 +6,7 @@ import Data.Input.Types
 import Control.Applicative
 import Control.Monad (join)
 import Data.List (findIndex)
+import Data.Word
 import Data.Either
 import qualified Data.Set as S
 
@@ -14,6 +15,13 @@ type Label = ByteString
 type PointCloudSize = Int
 type Coordinate = Int
 type Index = Int
+type Bit = Word8
+type Byte = Word8
+type Bin = [Bit]
+type Padding = Word8
+type LateralInfo = Word8
+type NumByte = Int
+type Mask = [Bool]
 
 data Axis = X | Y | Z
   deriving (Show)

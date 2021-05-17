@@ -28,6 +28,8 @@ main = do
       B.writeFile compressedFileName (B.pack encodedBin)
       exitSuccess
     (Decode input) -> do
+      putStrLn $ "Decoding " ++ input
+      fileContents <- B.readFile input
       putStrLn "Decoder missing!"
       exitSuccess
     (Error mError) -> do
@@ -35,7 +37,7 @@ main = do
       exitFailure
 
 filePathEDX :: FilePath -> FilePath
-filePathEDX f = (\x -> x ++ ".edx") $ fst $ span (/= '.') f
+filePathEDX f = (++ ".edx") $ takeWhile (/= '.') f
 
 checkArgsDecode :: FilePath -> Args
 checkArgsDecode fp
@@ -50,7 +52,7 @@ checkArgsEncode fp axis
   where cPLY = checkFormat ".ply" fp
 
 checkFormat :: Format -> FilePath -> Bool
-checkFormat fm fp = (== fm) $ snd $ span (/= '.') fp
+checkFormat fm fp = (== fm) $ dropWhile (/= '.') fp
 
 string2Axis :: String -> Axis
 string2Axis "X" = X
@@ -70,12 +72,9 @@ parseArgs (operation:input:arg1:_)
   | otherwise         = Error "Invalid operation!"
 parseArgs _ = Error "Invalid arguments!"
 
-mainDebug :: IO ()
+--mainDebug :: IO ()
 mainDebug = do
-  let file = "test3.ply"
-  pcData <- B.readFile file
-  putStrLn $ "Encoding..."
-  (Right encodedBin) <- pure $ buildEDX =<< encodeGeometry X =<< parsePLY pcData
-  putStrLn $ "Encoding completed!"
-  B.writeFile (filePathEDX file) (B.pack encodedBin)
-  return $ ()
+  let file = "test.edx"
+  decodedContent <- B.readFile file
+  (Right decoded) <- pure $ decodeGeometry decodedContent
+  return decoded

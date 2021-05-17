@@ -33,16 +33,16 @@ getPointCloud :: PLY -> Either String PointCloud
 getPointCloud ply = getCoordinatesIndexes (plyHeader ply) >>= extractVoxels (plyData ply)
 
 extractVoxels :: [Values] -> (Coordinate, Coordinate, Coordinate) -> Either String PointCloud
-extractVoxels dss (x,y,z) =
-  (\v -> PointCloud (S.fromList v) (side v)) <$> sequence ((\ds -> Voxel <$> g (ds !! x) <*> g (ds !! y) <*> g (ds !! z)) <$> dss)
+extractVoxels dss (u,v,w) =
+  (\x -> PointCloud (S.fromList x) (side x)) <$> sequence ((\ds -> Voxel <$> g (ds !! u) <*> g (ds !! v) <*> g (ds !! w)) <$> dss)
   where g (FloatS n) = Right (round n :: Int)
         g _ = Left "Data is not float"
-        side v = computePower2 $ computePCLimit' v
+        side x = computePower2 $ computePCLimit' x
 
 computePCLimit :: [Voxel] -> PointCloudSize
-computePCLimit v = maximum [maxX - minX, maxY - minY, maxZ - minZ]
-  where (maxX, maxY, maxZ) = maxLimit v
-        (minX, minY, minZ) = minLimit v
+computePCLimit v = maximum [maxU - minU, maxV - minV, maxW - minW]
+  where (maxU, maxV, maxW) = maxLimit v
+        (minU, minV, minW) = minLimit v
 
 computePCLimit' :: [Voxel] -> PointCloudSize
 computePCLimit' = foldr (max . largestDimension) 0
@@ -53,24 +53,24 @@ slicePointCloud axis cutIndex (PointCloud v s) =
    PointCloud (S.filter (f (>) axis cutIndex) v) s)
   where
     f :: (Coordinate -> Coordinate -> Bool) -> Axis -> Coordinate -> Voxel -> Bool
-    f op X cutIndex v = getX v `op` cutIndex
-    f op Y cutIndex v = getY v `op` cutIndex
-    f op Z cutIndex v = getZ v `op` cutIndex
+    f op X cutIndex v = getU v `op` cutIndex
+    f op Y cutIndex v = getV v `op` cutIndex
+    f op Z cutIndex v = getW v `op` cutIndex
 
 slicePointCloud' :: Axis -> Range -> PointCloud -> PointCloud
 slicePointCloud' axis r (PointCloud v s) =
   PointCloud (S.filter (f axis r) v) s
   where
     f :: Axis -> Range -> Voxel -> Bool
-    f X (a,b) v = getX v >= a && getX v <= b
-    f Y (a,b) v = getY v >= a && getY v <= b
-    f Z (a,b) v = getZ v >= a && getZ v <= b
+    f X (a,b) v = getU v >= a && getU v <= b
+    f Y (a,b) v = getV v >= a && getV v <= b
+    f Z (a,b) v = getW v >= a && getW v <= b
 
 sliceToSilhoutte :: Axis -> PointCloud -> ImageSparse
 sliceToSilhoutte a (PointCloud v s) = ImageSparse (sliceToPixelList a (S.toList v)) s
 
 sliceToPixelList :: Axis -> [Voxel] -> S.Set Pixel
 sliceToPixelList _ [] = S.empty
-sliceToPixelList X (Voxel _ y z : vs) = S.fromList [Pixel (y + 1) (z + 1)] `S.union` sliceToPixelList X vs
-sliceToPixelList Y (Voxel x y z : vs) = S.fromList [Pixel (x + 1) (z + 1)] `S.union` sliceToPixelList Y vs
-sliceToPixelList Z (Voxel x y z : vs) = S.fromList [Pixel (x + 1) (y + 1)] `S.union` sliceToPixelList Z vs
+sliceToPixelList X (Voxel _ v w : vs) = S.fromList [Pixel (v + 1) (w + 1)] `S.union` sliceToPixelList X vs
+sliceToPixelList Y (Voxel u _ w : vs) = S.fromList [Pixel (u + 1) (w + 1)] `S.union` sliceToPixelList Y vs
+sliceToPixelList Z (Voxel u v _ : vs) = S.fromList [Pixel (u + 1) (v + 1)] `S.union` sliceToPixelList Z vs

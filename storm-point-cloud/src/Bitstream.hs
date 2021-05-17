@@ -7,13 +7,6 @@ import Data.Bits
 import Data.List
 import Data.Utils
 
-type Bit = Word8
-type Byte = Word8
-type Bin = [Bit]
-type Padding = Word8
-type LateralInfo = Word8
-type NumByte = Int
-
 buildEDX :: (Bin, PointCloudSize, Axis) -> Either String Bin
 buildEDX (b, s, a) = writeEDX b s a
 

@@ -7,33 +7,33 @@ data Pixel = Pixel Coordinate Coordinate
 
 instance Eq Pixel where
     -- (==) Pixel -> Pixel -> Bool
-    (Pixel x1 y1) == (Pixel x2 y2) = (x1 == x2) && (y1 == y2)
+    (Pixel u1 v1) == (Pixel u2 v2) = (u1 == u2) && (v1 == v2)
 
     -- (!=) Pixel -> Pixel -> Bool
-    (Pixel x1 y1) /= (Pixel x2 y2) = (x1 /= x2) || (y1 /= y2)
+    (Pixel u1 v1) /= (Pixel u2 v2) = (u1 /= u2) || (v1 /= v2)
 
 instance Ord Pixel where
   -- Less comparison
-  (Pixel x1 y1) < (Pixel x2 y2) 
-    = if x1 == x2 then
-         y1 < y2
+  (Pixel u1 v1) < (Pixel u2 v2) 
+    = if u1 == u2 then
+         v1 < v2
       else
-         x1 < x2
+         u1 < u2
   -- Less or Equal comparison
-  (Pixel x1 y1) <= (Pixel x2 y2) 
-    = if x1 == x2 then
-        y1 <= y2
+  (Pixel u1 v1) <= (Pixel u2 v2) 
+    = if u1 == u2 then
+        v1 <= v2
       else
-        x1 <= x2
+        u1 <= u2
   -- Greater comparison
-  (Pixel x1 y1) > (Pixel x2 y2) 
-    = if x1 == x2 then
-        y1 > y2 
+  (Pixel u1 v1) > (Pixel u2 v2) 
+    = if u1 == u2 then
+        v1 > v2 
       else
-        x1 > x2
+        u1 > u2
   -- Greater or Equal comparison
-  (Pixel x1 y1) >= (Pixel x2 y2) 
-    = if x1 == x2 then
-        y1 >= y2
+  (Pixel u1 v1) >= (Pixel u2 v2) 
+    = if u1 == u2 then
+        v1 >= v2
       else
-        x1 >= x2
+        u1 >= u2
