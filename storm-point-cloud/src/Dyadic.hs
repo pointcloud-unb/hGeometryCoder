@@ -59,8 +59,9 @@ decodeGeometry b = do
         Nothing -> Left "Error reading .edx file!"
         Just (PCBitStream padding axis size payload) -> do
                                         let imageBin = extractData payload padding
-                                        let rootSilhoutte = buildRootSilhoutte (take (size*size) imageBin) size
-                                        Left "string"
+                                        Right imageBin
+                                        --let rootSilhoutte = buildRootSilhoutte (take (size*size) imageBin) size
+                                        --Left "string"
 
 buildRootSilhoutte :: Bin -> PointCloudSize -> ImageSparse
 buildRootSilhoutte b s = rasterToSparse $ f <$> M.fromList s s b
