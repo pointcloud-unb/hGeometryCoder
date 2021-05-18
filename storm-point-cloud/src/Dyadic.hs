@@ -12,7 +12,7 @@ import Bitstream
 import Data.Matrix
 import Data.Maybe
 import Data.Input.DecoderParser
-import Data.Structures.PCBitStream
+import qualified Data.Structures.PCBitStream as P
 import qualified Data.Set as S
 import qualified Data.Matrix as M
 
@@ -24,7 +24,7 @@ encodeGeometry axis ply = do
                         Right (writeRootSilhoutte tft ++ concatMap triForce2Bin tft, size, axis)
 
 buildTriForce :: Axis -> PLY -> Either String (TriForceTree, PointCloudSize)
-buildTriForce axis ply = pc2TriForce axis =<< getPointCloud =<< filterFromLabel "vertex" ply
+buildTriForce axis ply = pc2TriForce axis =<< getPointCloud axis =<< filterFromLabel "vertex" ply
 
 writeRootSilhoutte :: TriForceTree -> Bin
 writeRootSilhoutte tft = iRaster2Bin $ sparseToRaster $ getRoot tft
@@ -52,16 +52,17 @@ applyMaskEncoder = elementwise f
 
 -- Decoder
 
-decodeGeometry :: B.ByteString -> Either String Bin
+decodeGeometry :: B.ByteString -> Either String (PointCloud, Bin)
 decodeGeometry b = do
     let resultDecodeParser = bitstreamPC b
     case resultDecodeParser of
         Nothing -> Left "Error reading .edx file!"
-        Just (PCBitStream padding axis size payload) -> do
-                                        let imageBin = extractData payload padding
-                                        Right imageBin
-                                        --let rootSilhoutte = buildRootSilhoutte (take (size*size) imageBin) size
-                                        --Left "string"
+        Just (P.PCBitStream padding axis size payload) -> do
+                                        let (root, rest) = extractData payload padding size
+                                        let rootSilhoutte =  map (== 1) root
+                                        let tfr = triForceTreeRange (0, size - 1)
+                                        let (pc, _, b) = triForceR2PC mempty tfr rootSilhoutte rest (P.Header axis size)
+                                        Right (pc, b)
 
 buildRootSilhoutte :: Bin -> PointCloudSize -> ImageSparse
 buildRootSilhoutte b s = rasterToSparse $ f <$> M.fromList s s b
@@ -70,6 +71,6 @@ buildRootSilhoutte b s = rasterToSparse $ f <$> M.fromList s s b
 bString2Bin :: B.ByteString -> Bin
 bString2Bin b = concatMap integral2BitList $ B.unpack b
 
-extractData :: B.ByteString -> Padding -> Bin
-extractData b p = take (length bin - fromIntegral p) bin
+extractData :: B.ByteString -> Padding -> PointCloudSize -> (Bin, Bin)
+extractData b p s = splitAt (s*s) $ take (length bin - fromIntegral p) bin
     where bin = bString2Bin b

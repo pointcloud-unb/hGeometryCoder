@@ -7,6 +7,8 @@ import qualified Data.Set as S
 import Data.Utils
 import Data.Input.Types
 import Data.Structures.Voxel
+import Data.Matrix
+import Data.Maybe
 
 -- Point Cloud type
 data PointCloud = PointCloud { pcVoxels :: S.Set Voxel
@@ -17,7 +19,7 @@ instance Semigroup PointCloud where
   (PointCloud ps1 l1) <> (PointCloud ps2 l2) = PointCloud (ps1 `S.union` ps2) (max l1 l2)
 
 instance Monoid PointCloud where
-  mempty = PointCloud S.empty 0 
+  mempty = PointCloud S.empty 0
 
 instance Eq PointCloud where
   (PointCloud voxel_set_1 size1) ==
@@ -29,15 +31,21 @@ addVoxel (PointCloud set size) voxel = PointCloud (S.insert voxel set) size
 removeVoxel :: PointCloud -> Voxel -> PointCloud
 removeVoxel (PointCloud set size) voxel = PointCloud (S.delete voxel set) size
 
-getPointCloud :: PLY -> Either String PointCloud
-getPointCloud ply = getCoordinatesIndexes (plyHeader ply) >>= extractVoxels (plyData ply)
+getPointCloud :: Axis -> PLY -> Either String PointCloud
+getPointCloud axis ply = getCoordinatesIndexes (plyHeader ply) >>= extractVoxels axis (plyData ply)
 
-extractVoxels :: [Values] -> (Coordinate, Coordinate, Coordinate) -> Either String PointCloud
-extractVoxels dss (u,v,w) =
-  (\x -> PointCloud (S.fromList x) (side x)) <$> sequence ((\ds -> Voxel <$> g (ds !! u) <*> g (ds !! v) <*> g (ds !! w)) <$> dss)
-  where g (FloatS n) = Right (round n :: Int)
+extractVoxels :: Axis -> [Values] -> (Coordinate, Coordinate, Coordinate) -> Either String PointCloud
+extractVoxels axis dss (u,v,w) =
+  (\x -> PointCloud (S.fromList x) (side x)) <$> sequence (createVoxel <$> dss)
+  where createVoxel ds = reordenate axis <$> (Voxel <$> g (ds !! u) <*> g (ds !! v) <*> g (ds !! w))
+        g (FloatS n) = Right (round n :: Int)
         g _ = Left "Data is not float"
         side x = computePower2 $ computePCLimit' x
+
+reordenate :: Axis -> Voxel -> Voxel
+reordenate X (Voxel u v w) = Voxel u v w
+reordenate Y (Voxel u v w) = Voxel v w u
+reordenate Z (Voxel u v w) = Voxel w u v
 
 computePCLimit :: [Voxel] -> PointCloudSize
 computePCLimit v = maximum [maxU - minU, maxV - minV, maxW - minW]
@@ -74,3 +82,12 @@ sliceToPixelList _ [] = S.empty
 sliceToPixelList X (Voxel _ v w : vs) = S.fromList [Pixel (v + 1) (w + 1)] `S.union` sliceToPixelList X vs
 sliceToPixelList Y (Voxel u _ w : vs) = S.fromList [Pixel (u + 1) (w + 1)] `S.union` sliceToPixelList Y vs
 sliceToPixelList Z (Voxel u v _ : vs) = S.fromList [Pixel (u + 1) (v + 1)] `S.union` sliceToPixelList Z vs
+
+addRasterToPointCloud :: Range -> Axis -> ImageRaster -> PointCloud -> PointCloud
+addRasterToPointCloud (coordinate,_) axis iR pc = pc <> PointCloud voxels (nrows iR)
+    where voxels = S.fromList $ catMaybes (toList $ mapPos (\p a -> f p axis) iR)
+          f (j, i) ax
+            | not (getElem j i iR)  = Nothing
+            | ax == X               = Just $ Voxel coordinate (j - 1) (i - 1)
+            | ax == Y               = Just $ Voxel (i - 1) coordinate (j - 1)
+            | otherwise             = Just $ Voxel (j - 1) (i - 1) coordinate

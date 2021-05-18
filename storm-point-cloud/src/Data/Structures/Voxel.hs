@@ -54,6 +54,12 @@ instance Ord Voxel where
           v1 >= v2
       else
         u1 >= u2
+{- 
+instance Semigroup Voxel where
+(Voxel u1 v1 w1) <> (Voxel u2 v2 w2) = Voxel (max u1 u2) (max v1 v2) (max w1 w2)
+
+instance Monoid Voxel where
+    mempty = Voxel 0 0 0 -}
 
 maxLimit :: [Voxel] -> (Int, Int, Int)
 maxLimit v = (maximum $ map getU v, maximum $ map getV v, maximum $ map getW v)
@@ -63,3 +69,6 @@ minLimit v = (minimum $ map getU v, minimum $ map getV v, minimum $ map getW v)
 
 largestDimension :: Voxel -> Int
 largestDimension (Voxel u v w) = maximum [u,v,w]
+
+pixelToVoxel :: Coordinate -> Coordinate -> Coordinate -> Voxel
+pixelToVoxel u v w = Voxel (u - 1) (v - 1) (w - 1)

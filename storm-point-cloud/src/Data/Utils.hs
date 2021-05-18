@@ -22,9 +22,13 @@ type Padding = Word8
 type LateralInfo = Word8
 type NumByte = Int
 type Mask = [Bool]
+type Left = [Bool]
+type Root = [Bool]
 
 data Axis = X | Y | Z
-  deriving (Show)
+  deriving (Show, Eq)
+
+
 
 filterFromLabel :: Label -> PLY -> Either String PLY
 filterFromLabel label (PLY h d) = do
