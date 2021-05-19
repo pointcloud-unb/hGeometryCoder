@@ -18,15 +18,13 @@ fixedHeader :: Int -> [Char]
 fixedHeader s = "ply\nformat ascii 1.0\nelement vertex " ++ show s ++ "\nproperty float x\nproperty float y\nproperty float z\nend_header\n"
 
 buildPLY :: PointCloud -> Either String BC.ByteString
-buildPLY (PointCloud sV s)=  Right $ BC.pack $ fixedHeader (S.size sV) ++ concatMap voxel2Char (S.toList sV)
+buildPLY (PointCloud sV _)=  Right $ BC.pack $ fixedHeader (S.size sV) ++ concatMap voxel2String sV
 
-voxel2Char :: Voxel -> [Char]
-voxel2Char (Voxel u v w) = [uB, space, vB, space, wB, enter]
-    where uB = intToDigit u
-          vB = intToDigit v
-          wB = intToDigit w
-          space = ' ' 
-          enter = '\n'
+voxel2String :: Voxel -> String
+voxel2String (Voxel u v w) = uB ++ " "  ++ vB ++ " " ++ wB ++ "\n"
+    where uB = show u
+          vB = show v
+          wB = show w
 
 buildEDX :: (Bin, PointCloudSize, Axis) -> Either String Bin
 buildEDX (b, s, a) = writeEDX b s a
