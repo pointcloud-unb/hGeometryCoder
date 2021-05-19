@@ -1,5 +1,6 @@
 module Data.Structures.Voxel where
 import Data.Utils
+import qualified Data.ByteString as B
 
 -- Voxel type
 data Voxel = Voxel { getU :: Coordinate

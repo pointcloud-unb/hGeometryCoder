@@ -23,21 +23,24 @@ main = do
       plyData <- B.readFile input
       putStrLn $ "Encoding " ++ input
       (Right encodedBin) <- pure $ buildEDX =<< encodeGeometry axis =<< parsePLY plyData
-      let compressedFileName = filePathEDX input
+      let compressedFileName = filePathFormat ".edx" input
       putStrLn $ "Encoding completed! Writing " ++ compressedFileName
       B.writeFile compressedFileName (B.pack encodedBin)
       exitSuccess
     (Decode input) -> do
       putStrLn $ "Decoding " ++ input
       fileContents <- B.readFile input
-      putStrLn "Decoder missing!"
+      (Right pc) <- pure $ buildPLY =<< decodeGeometry fileContents
+      let decompressedFileName = filePathFormat ".ply" input
+      putStrLn $ "Decoding completed! Writing " ++ decompressedFileName
+      B.writeFile decompressedFileName pc
       exitSuccess
     (Error mError) -> do
       putStrLn mError
       exitFailure
 
-filePathEDX :: FilePath -> FilePath
-filePathEDX f = (++ ".edx") $ takeWhile (/= '.') f
+filePathFormat :: FilePath -> FilePath -> FilePath
+filePathFormat format f = (++ format) $ takeWhile (/= '.') f
 
 checkArgsDecode :: FilePath -> Args
 checkArgsDecode fp
@@ -76,5 +79,6 @@ parseArgs _ = Error "Invalid arguments!"
 mainDebug = do
   let file = "test.edx"
   decodedContent <- B.readFile file
-  (Right decoded) <- pure $ decodeGeometry decodedContent
-  return decoded
+  (Right pc) <- pure $ buildPLY =<< decodeGeometry decodedContent
+  B.writeFile "testeD.ply" pc
+  return pc

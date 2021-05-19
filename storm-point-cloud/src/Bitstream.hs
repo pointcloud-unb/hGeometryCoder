@@ -1,11 +1,32 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Bitstream where
 
+import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString as B
+import Data.Char
 import Data.Word
 import Data.Bits
 import Data.List
 import Data.Utils
+import Data.Structures.PointCloud
+import Data.Structures.Voxel
+import qualified Data.Set as S
+
+--fixedHeader :: PointCloudSize -> B.ByteString
+--fixedHeader s = B.pack (fromIntegral s :: Word16)
+fixedHeader :: Int -> [Char]
+fixedHeader s = "ply\nformat ascii 1.0\nelement vertex " ++ show s ++ "\nproperty float x\nproperty float y\nproperty float z\nend_header\n"
+
+buildPLY :: PointCloud -> Either String BC.ByteString
+buildPLY (PointCloud sV s)=  Right $ BC.pack $ fixedHeader (S.size sV) ++ concatMap voxel2Char (S.toList sV)
+
+voxel2Char :: Voxel -> [Char]
+voxel2Char (Voxel u v w) = [uB, space, vB, space, wB, enter]
+    where uB = intToDigit u
+          vB = intToDigit v
+          wB = intToDigit w
+          space = ' ' 
+          enter = '\n'
 
 buildEDX :: (Bin, PointCloudSize, Axis) -> Either String Bin
 buildEDX (b, s, a) = writeEDX b s a
@@ -49,14 +70,14 @@ writeEDXData tcoded bin
     | otherwise      = (fromIntegral padding, finishTranscode)
         where binSize = Prelude.length bin
               padding = 8 - binSize
-              finishTranscode = tcoded ++ [B.foldl' (\ res b -> (res `shiftL` 1) + b) 0 (B.pack bin) `shiftL` padding]
+              finishTranscode = tcoded ++ [B.foldl' (\ res b -> res `shiftL` 1 + b) 0 (B.pack bin) `shiftL` padding]
 
 transcodeSide :: NumByte -> Bin -> [Byte]
 transcodeSide 0 _ = []
 transcodeSide nBytes bin = transcode (take 8 bin) : transcodeSide (nBytes - 1) (drop 8 bin)
 
 combinePaddingWithAxis :: Padding -> Axis -> LateralInfo
-combinePaddingWithAxis padding axis = (padding `shiftL` 4) .|. axis2Bin axis
+combinePaddingWithAxis padding axis = padding `shiftL` 4 .|. axis2Bin axis
 
 axis2Bin :: Axis -> Byte
 axis2Bin X = 0
@@ -65,10 +86,11 @@ axis2Bin Z = 2
 
 transcode :: Bin -> Byte
 transcode (b1:b2:b3:b4:b5:b6:b7:b8:_) =
-    (b1 `shiftL` 7) .|.
-    (b2 `shiftL` 6) .|.
-    (b3 `shiftL` 5) .|.
-    (b4 `shiftL` 4) .|.
-    (b5 `shiftL` 3) .|.
-    (b6 `shiftL` 2) .|.
-    (b7 `shiftL` 1) .|. b8
+    b1 `shiftL` 7 .|.
+    b2 `shiftL` 6 .|.
+    b3 `shiftL` 5 .|.
+    b4 `shiftL` 4 .|.
+    b5 `shiftL` 3 .|.
+    b6 `shiftL` 2 .|.
+    b7 `shiftL` 1 .|. b8
+

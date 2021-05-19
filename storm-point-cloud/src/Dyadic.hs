@@ -52,7 +52,7 @@ applyMaskEncoder = elementwise f
 
 -- Decoder
 
-decodeGeometry :: B.ByteString -> Either String (PointCloud, Bin)
+decodeGeometry :: B.ByteString -> Either String PointCloud
 decodeGeometry b = do
     let resultDecodeParser = bitstreamPC b
     case resultDecodeParser of
@@ -62,7 +62,7 @@ decodeGeometry b = do
                                         let rootSilhoutte =  map (== 1) root
                                         let tfr = triForceTreeRange (0, size - 1)
                                         let (pc, _, b) = triForceR2PC mempty tfr rootSilhoutte rest (P.Header axis size)
-                                        Right (pc, b)
+                                        Right pc
 
 buildRootSilhoutte :: Bin -> PointCloudSize -> ImageSparse
 buildRootSilhoutte b s = rasterToSparse $ f <$> M.fromList s s b
