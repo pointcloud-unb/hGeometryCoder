@@ -22,10 +22,10 @@ removePixelToSparse :: ImageSparse -> Pixel -> ImageSparse
 removePixelToSparse (ImageSparse set side) pixel = ImageSparse (S.delete pixel set) side
 
 -- 2D Matrix
-type Presence = Bool
+type Occupancy = Bool
 type Side = Int
 type MLine = Int
-type ImageRaster = Matrix Presence
+type ImageRaster = Matrix Occupancy
 
 emptyMatrix :: Side -> ImageRaster
 emptyMatrix s = matrix s s (\(i, j) -> False)
@@ -45,15 +45,15 @@ sparseToRaster (ImageSparse ps s) = foldl check (emptyMatrix s) ps
 rasterToSparse :: ImageRaster -> ImageSparse
 rasterToSparse m = ImageSparse (S.fromList (buildPixelList 1 $ toLists m)) (nrows m)
 
-buildPixelList :: MLine -> [[Presence]] -> [Pixel]
+buildPixelList :: MLine -> [[Occupancy]] -> [Pixel]
 buildPixelList i [] = []
 buildPixelList i (l:ls)= fillByLine l 1 ++ buildPixelList (i + 1) ls
   where 
     fillByLine [] _ = []
     fillByLine (e:es) j = if e then Pixel i j : fillByLine es (j + 1) else fillByLine es (j + 1)
 
-presenceList2Sparse :: Side -> [Presence] -> ImageSparse
+presenceList2Sparse :: Side -> [Occupancy] -> ImageSparse
 presenceList2Sparse s b = rasterToSparse $ fromList s s b
 
-presenceList2Raster :: Side -> [Presence] -> ImageRaster
+presenceList2Raster :: Side -> [Occupancy] -> ImageRaster
 presenceList2Raster s = fromList s s

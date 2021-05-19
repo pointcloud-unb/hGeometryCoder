@@ -23,10 +23,10 @@ encodeGeometry axis ply = do
                         (tft, size) <- buildTriForce axis ply
                         Right (writeRootSilhoutte tft ++ concatMap triForce2Bin tft, size, axis)
 
-buildTriForce :: Axis -> PLY -> Either String (TriForceTree, PointCloudSize)
+buildTriForce :: Axis -> PLY -> Either String (ISparseTriForceTree, PointCloudSize)
 buildTriForce axis ply = pc2TriForce axis =<< getPointCloud axis =<< filterFromLabel "vertex" ply
 
-writeRootSilhoutte :: TriForceTree -> Bin
+writeRootSilhoutte :: ISparseTriForceTree -> Bin
 writeRootSilhoutte tft = iRaster2Bin $ sparseToRaster $ getRoot tft
     where getRoot tft = getValue $ getValue tft
 
@@ -38,7 +38,7 @@ iRaster2Bin' :: Matrix (Maybe Bool) -> Bin
 iRaster2Bin' m = map f $ filter isJust $ toList m
     where f (Just a) = if a then 1 else 0
 
-triForce2Bin :: TriForce -> Bin
+triForce2Bin :: ISparseTriForce -> Bin
 triForce2Bin tft = iRaster2Bin' (applyMaskEncoder y yL) ++ iRaster2Bin' (applyMaskEncoder yL yR)
     where y = sparseToRaster $ getValue tft
           yL = sparseToRaster $ getValue $ left tft
