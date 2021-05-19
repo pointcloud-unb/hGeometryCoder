@@ -52,8 +52,8 @@ buildPixelList i (l:ls)= fillByLine l 1 ++ buildPixelList (i + 1) ls
     fillByLine [] _ = []
     fillByLine (e:es) j = if e then Pixel i j : fillByLine es (j + 1) else fillByLine es (j + 1)
 
-presenceList2Sparse :: Side -> [Occupancy] -> ImageSparse
-presenceList2Sparse s b = rasterToSparse $ fromList s s b
+occupancyList2Sparse :: Side -> [Occupancy] -> ImageSparse
+occupancyList2Sparse s b = rasterToSparse $ fromList s s b
 
-presenceList2Raster :: Side -> [Occupancy] -> ImageRaster
-presenceList2Raster s = fromList s s
+occupancyList2Raster :: Side -> [Occupancy] -> ImageRaster
+occupancyList2Raster s = fromList s s

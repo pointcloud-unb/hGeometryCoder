@@ -24,7 +24,7 @@ type NumByte = Int
 type Mask = [Bool]
 type Left = [Bool]
 type Root = [Bool]
-type TriforceRoot = [Bool]
+type TriForceRoot = [Bool]
 
 data Axis = X | Y | Z
   deriving (Show, Eq)

@@ -10,10 +10,10 @@ import Data.Matrix as M
 import Data.Structures.PCBitStream
 
 type RangeTriForce = BinTree Range
-type IRasterTriForce = BinTree [Occupancy]
+type OcuppancyTriForce = BinTree [Occupancy]
 type ISparseTriForce = BinTree ImageSparse
 type RangeTriForceTree = BinTree RangeTriForce
-type IRasterTriForceTree = BinTree IRasterTriForce
+type OcuppancyTriForceTree = BinTree OcuppancyTriForce
 type ISparseTriForceTree = BinTree ISparseTriForce
 
 data BinTree a = Node { nodeValue :: a
@@ -31,12 +31,6 @@ rangeTree (i, j)
   | i == j    = Leaf (i,j)
   | otherwise = Node (i,j) (rangeTree (i, j')) (rangeTree (j' + 1, j))
   where j' = (j + i) `div` 2
-
-rangeSparseTree :: Range -> BinTree (Range, [Occupancy])
-rangeSparseTree (i, j)
-  | i == j    = Leaf ((i,j), [])
-  | otherwise = Node ((i,j), []) (rangeSparseTree (i, j')) (rangeSparseTree (j' + 1, j))
-        where j' = (j + i) `div` 2
 
 rangeTriForce :: Range -> RangeTriForce
 rangeTriForce (a,b) = Node (a,b) (Leaf (a, b')) (Leaf (b' + 1, b))
@@ -66,37 +60,37 @@ pc2TriForce axis pc = Right (fmap (f pc) <$> triForceTreeRange (0, pcSize pc - 1
 -- Decoder
 
 -- computeLeftSilhouette :: Father -> Left -> Binary -> (Left, Rest)
-computeLeftSilhouette :: TriforceRoot -> [Occupancy] -> Bin -> ([Occupancy], Bin)
+computeLeftSilhouette :: TriForceRoot -> [Occupancy] -> Bin -> ([Occupancy], Bin)
 computeLeftSilhouette [] e rest = (e, rest)
 computeLeftSilhouette (m:ms) e bs
     | m         = computeLeftSilhouette ms (e ++ [head bs == 1]) (tail bs)
     | otherwise = computeLeftSilhouette ms (e ++ [False]) bs
 
 -- computeRightSilhouette :: Father -> Left -> Right -> Binary -> (Right, Rest)
-computeRightSilhouette :: TriforceRoot -> Left -> [Occupancy] -> Bin -> ([Occupancy], Bin)
+computeRightSilhouette :: TriForceRoot -> Left -> [Occupancy] -> Bin -> ([Occupancy], Bin)
 computeRightSilhouette [] [] e rest = (e, rest)
 computeRightSilhouette (m:ms) (l:ls) e bs
   | not m       = computeRightSilhouette ms ls (e ++ [False]) bs
   | m && not l  = computeRightSilhouette ms ls (e ++ [True]) bs
   | otherwise   = computeRightSilhouette ms ls (e ++ [head bs == 1]) (tail bs)
 
-rTriForce2IRTriForce :: TriforceRoot -> Bin -> (IRasterTriForce, Bin)
-rTriForce2IRTriForce root b = (Node root (Leaf left) (Leaf right), b'')
+rTriForce2OTriForce :: TriForceRoot -> Bin -> (OcuppancyTriForce, Bin)
+rTriForce2OTriForce root b = (Node root (Leaf left) (Leaf right), b'')
   where (left, b') = computeLeftSilhouette root [] b
         (right, b'') = computeRightSilhouette root left [] b'
 
--- tf2tfp :: PointCloud -> RangeTriForceTree -> TriforceRoot -> Bin -> (PointCloud, IRasterTriForceTree, Bin)
-triForceR2PC :: PointCloud -> RangeTriForceTree -> TriforceRoot -> Bin -> Header -> (PointCloud, IRasterTriForceTree, Bin)
-triForceR2PC pc (Leaf rT) root b h = (leafNodes2PC pc rT irL irR h, Leaf (Node irC (Leaf irL) (Leaf irR)), b')
-  where (Node irC (Leaf irL) (Leaf irR), b') = rTriForce2IRTriForce root b
-triForceR2PC pc (Node _ rTfTreeL rTfTreeR) root b h = (pc'', Node (Node irTfC (Leaf irTfL) (Leaf irTfR)) irTfTreeL irTfTreeR, b''')
-  where (Node irTfC (Leaf irTfL) (Leaf irTfR), b') = rTriForce2IRTriForce root b
-        (pc',irTfTreeL, b'') = triForceR2PC pc rTfTreeL irTfL b' h
-        (pc'',irTfTreeR, b''') = triForceR2PC pc' rTfTreeR irTfR b'' h
+-- triForceR2PC :: PointCloud -> RangeTriForceTree -> TriforceRoot -> Bin -> (PointCloud, IRasterTriForceTree, Bin)
+triForceR2PC :: PointCloud -> RangeTriForceTree -> TriForceRoot -> Bin -> Header -> (PointCloud, OcuppancyTriForceTree, Bin)
+triForceR2PC pc (Leaf rT) root b h = (leafNodes2PC pc rT oL oR h, Leaf (Node oC (Leaf oL) (Leaf oR)), b')
+  where (Node oC (Leaf oL) (Leaf oR), b') = rTriForce2OTriForce root b
+triForceR2PC pc (Node _ rTfTreeL rTfTreeR) root b h = (pc'', Node (Node oTfC (Leaf oTfL) (Leaf oTfR)) oTfTreeL oTfTreeR, b''')
+  where (Node oTfC (Leaf oTfL) (Leaf oTfR), b') = rTriForce2OTriForce root b
+        (pc',oTfTreeL, b'') = triForceR2PC pc rTfTreeL oTfL b' h
+        (pc'',oTfTreeR, b''') = triForceR2PC pc' rTfTreeR oTfR b'' h
 
 leafNodes2PC :: PointCloud -> RangeTriForce -> [Occupancy] -> [Occupancy] -> Header -> PointCloud
 leafNodes2PC pc (Node _ (Leaf rL) (Leaf rR)) leftL rightL h = pc''
   where axis = axisH h
         side = pcSizeH h
-        pc' = addRasterToPointCloud rL axis (presenceList2Raster side leftL) pc
-        pc'' = addRasterToPointCloud rR axis (presenceList2Raster side rightL) pc'
+        pc' = addRasterToPointCloud rL axis (occupancyList2Raster side leftL) pc
+        pc'' = addRasterToPointCloud rR axis (occupancyList2Raster side rightL) pc'
