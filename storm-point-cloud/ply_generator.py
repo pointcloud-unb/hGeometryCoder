@@ -6,7 +6,7 @@ def main():
     print("Insuficient arguments!")
 
   file_name = sys.argv[1]
-  in_dimension = int(sys.argv[2])
+  pc_side = int(sys.argv[2])
   in_n_points = int(sys.argv[3])
 
   f = open(file_name, "w")
@@ -19,10 +19,10 @@ property float y
 property float z
 end_header\n""".format(n_points = in_n_points))
   
-  for i in range(in_dimension):
-    x_random,y_random,z_random = [random.randint(0, in_dimension-1),
-             random.randint(0, in_dimension-1),
-             random.randint(0, in_dimension-1)]
+  for i in range(in_n_points):
+    x_random,y_random,z_random = [random.randint(0, pc_side-1),
+             random.randint(0, pc_side-1),
+             random.randint(0, pc_side-1)]
     f.write("{x:} {y:} {z:}\n".format(x = x_random,y = y_random,z = z_random))
 
   f.close()  
