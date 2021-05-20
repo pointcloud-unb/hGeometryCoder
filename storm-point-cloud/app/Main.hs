@@ -69,16 +69,27 @@ cAxis "Z" = True
 cAxis _ = False
 
 parseArgs :: [String] -> Args
-parseArgs (operation:input:arg1:_)
-  | operation == "-e" = checkArgsEncode input arg1
+parseArgs (operation:input:arg1)
+  | operation == "-e" = checkArgsEncode input (head arg1)
   | operation == "-d" = checkArgsDecode input
   | otherwise         = Error "Invalid operation!"
 parseArgs _ = Error "Invalid arguments!"
 
 --mainDebug :: IO ()
-mainDebug = do
-  let file = "test.edx"
+mainDecoder = do
+  let file = "teste128T.edx"
   decodedContent <- B.readFile file
+  --(Right pc) <- pure $ decodeGeometry decodedContent
   (Right pc) <- pure $ buildPLY =<< decodeGeometry decodedContent
-  B.writeFile "testeD.ply" pc
-  return pc
+  B.writeFile "teste128D.ply" pc
+  return ()
+
+mainEncoder = do
+  let file = "teste128.ply"
+  plyData <- B.readFile file
+  --(Right x) <- pure $ parsePLY plyData
+  --return x
+  --return plyData
+  (Right encodedBin) <- pure $ buildEDX =<< encodeGeometry X =<< parsePLY plyData
+  B.writeFile "teste128T.edx" (B.pack encodedBin)
+  return ()

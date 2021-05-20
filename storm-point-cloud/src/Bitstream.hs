@@ -34,10 +34,10 @@ writeEDX _ 0 _ = Left "Size without proper size!"
 writeEDX [] _ _ = Left "Encoding failed!"
 writeEDX bin size axis = do
     let (padding, dataBin) = writeEDXData [] bin
-    headerBin <- writeEDXHeader 2 (fromIntegral size :: Word16) (combinePaddingWithAxis padding axis)
+    headerBin <- writeEDXHeader (fromIntegral size :: Word16) (combinePaddingWithAxis padding axis)
     Right $ headerBin ++ dataBin
 
-addPadding :: NumByte -> Bin -> Either String Bin
+{- addPadding :: NumByte -> Bin -> Either String Bin
 addPadding nBytes bits
     | difference == 0 = Right bits
     | difference < 0  = Left "Bit array is bigger than NumByte size!"
@@ -47,19 +47,19 @@ addPadding nBytes bits
               difference = nBits - bitsSize
               padding = replicate difference 0
 
+bitListWithPadding :: (FiniteBits b) => NumByte -> b -> Either String Bin
+bitListWithPadding nBytes number = do
+    binary <- addPadding nBytes (integral2BitList number)
+    Right $ transcodeSide nBytes binary -}
+
 integral2BitList :: (FiniteBits b) => b -> Bin
 integral2BitList x = reverse $ map (f . testBit x) [0..(finiteBitSize x - 1)]
     where f y = if y then 1 else 0
 
-bitListWithPadding :: (FiniteBits b) => NumByte -> b -> Either String Bin
-bitListWithPadding nBytes number = do
-    binary <- addPadding nBytes (integral2BitList number)
-    Right $ transcodeSide nBytes binary
-
-writeEDXHeader :: (FiniteBits b) => NumByte -> b -> LateralInfo -> Either String Bin
-writeEDXHeader nBytes size padAxis = do
-    binary <- bitListWithPadding nBytes size
-    Right $ padAxis : binary
+writeEDXHeader :: (FiniteBits b) => b -> LateralInfo -> Either String Bin
+writeEDXHeader size padAxis = Right $ padAxis : transcodeSide binary
+    where binary = integral2BitList size
+    
 
 writeEDXData :: [Byte] -> Bin -> (Padding, Bin)
 writeEDXData tcoded bin
@@ -70,9 +70,8 @@ writeEDXData tcoded bin
               padding = 8 - binSize
               finishTranscode = tcoded ++ [B.foldl' (\ res b -> res `shiftL` 1 + b) 0 (B.pack bin) `shiftL` padding]
 
-transcodeSide :: NumByte -> Bin -> [Byte]
-transcodeSide 0 _ = []
-transcodeSide nBytes bin = transcode (take 8 bin) : transcodeSide (nBytes - 1) (drop 8 bin)
+transcodeSide :: Bin -> [Byte]
+transcodeSide bin = [transcode (take 8 bin), transcode (drop 8 bin)]
 
 combinePaddingWithAxis :: Padding -> Axis -> LateralInfo
 combinePaddingWithAxis padding axis = padding `shiftL` 4 .|. axis2Bin axis
