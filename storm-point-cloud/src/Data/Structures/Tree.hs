@@ -49,16 +49,6 @@ pc2TriForce :: Axis -> PointCloud -> Either String (ISparseTriForceTree, PointCl
 pc2TriForce axis pc = Right (fmap (f pc) <$> triForceTreeRange (0, pcSize pc - 1), pcSize pc)
   where f = \pc range -> sliceToSilhoutte axis . slicePointCloud' axis range $ pc
 
--- import Data.Either
--- import System.IO.Unsafe
--- pc = fromRight (PointCloud [] 0 0) $ unsafePerformIO main
--- f = \pc range -> sparseToRaster . sliceToSilhoutte X . slicePointCloud' X range $  pc
--- range = (0,3)
--- f <$> rangeTree range
--- (fmap.fmap) f $ triForceTree range
-
--- Decoder
-
 -- computeLeftSilhouette :: Father -> Left -> Binary -> (Left, Rest)
 computeLeftSilhouette :: TriForceRoot -> [Occupancy] -> Bin -> ([Occupancy], Bin)
 computeLeftSilhouette [] e rest = (e, rest)
