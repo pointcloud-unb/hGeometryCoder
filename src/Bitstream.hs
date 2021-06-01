@@ -33,7 +33,7 @@ writeEDX :: Bin -> PointCloudSize -> Axis -> Either String Bin
 writeEDX _ 0 _ = Left "Size without proper size!"
 writeEDX [] _ _ = Left "Encoding failed!"
 writeEDX bin size axis = do
-    let (padding, dataBin) = writeEDXData [] bin
+    let (padding, dataBin) = writeEDXData [] bin (Prelude.length bin)
     headerBin <- writeEDXHeader (fromIntegral size :: Word16) (combinePaddingWithAxis padding axis)
     Right $ headerBin ++ dataBin
 
@@ -61,12 +61,12 @@ writeEDXHeader size padAxis = Right $ padAxis : transcodeSide binary
     where binary = integral2BitList size
     
 
-writeEDXData :: [Byte] -> Bin -> (Padding, Bin)
-writeEDXData tcoded bin
-    | binSize >= 8   = writeEDXData (tcoded ++ [transcode bin]) (drop 8 bin)
+writeEDXData :: [Byte] -> Bin -> Int -> (Padding, Bin)
+writeEDXData tcoded bin binSize
+    | binSize >= 8   = writeEDXData (tcoded ++ [transcode bin]) (drop 8 bin) (binSize - 8)
     | binSize == 0   = (0, tcoded)
     | otherwise      = (fromIntegral padding, finishTranscode)
-        where binSize = Prelude.length bin
+        where --binSize = Prelude.length bin
               padding = 8 - binSize
               finishTranscode = tcoded ++ [B.foldl' (\ res b -> res `shiftL` 1 + b) 0 (B.pack bin) `shiftL` padding]
 
