@@ -31,7 +31,7 @@ main = do
       putStrLn $ "Decoding " ++ input
       fileContents <- B.readFile input
       (Right pc) <- pure $ buildPLY =<< decodeGeometry fileContents
-      let decompressedFileName = filePathFormat ".ply" input
+      let decompressedFileName = filePathFormat ".dec.ply" input
       putStrLn $ "Decoding completed! Writing " ++ decompressedFileName
       B.writeFile decompressedFileName pc
       exitSuccess
