@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: fd261d0753e04e07aa13b5a8c886df24a23c9c8472d0b51f5b382251df085adb
+-- hash: 90d06cd3fcec77ef350543ab09ffd6c7c16430f1a0334de3c74b69379515321a
 
 name:           storm-point-cloud
 version:        0.1.0.0
@@ -60,7 +60,7 @@ executable storm-point-cloud-exe
       Paths_storm_point_cloud
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -O2
   build-depends:
       attoparsec
     , base >=4.7 && <5
