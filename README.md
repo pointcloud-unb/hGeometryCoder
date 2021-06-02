@@ -6,4 +6,21 @@
 [![Stackage Nightly](http://stackage.org/package/g-pcc-dyadic-codec/badge/nightly)](http://stackage.org/nightly/package/g-pcc-dyadic-codec)
 [![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-See README for more info
+## To execute
+
+- Build the project:
+
+`$ stack build`
+
+- To execute:
+
+`$ stack exec -- storm-point-cloud-exe <option> <input_file_path> <axis>`
+
+Where:
+
+- option:
+  - `-e` : Enconding
+  - `-d` : Decoding
+  
+- input_file_path: input file for the chosen option
+- axis: axis throughout the encoding will be made 

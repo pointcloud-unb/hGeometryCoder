@@ -62,3 +62,5 @@ TAGS
 
 # other
 .DS_Store
+.stack-work/
+*~
