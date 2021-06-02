@@ -4,6 +4,7 @@ import Data.Utils
 import Dyadic
 import Data.Input.PLY
 import qualified Data.ByteString as B (readFile, writeFile, pack)
+import qualified Data.ByteString.Lazy as BL (writeFile)
 import Bitstream
 import System.Exit (exitSuccess, exitFailure)
 import System.Environment
@@ -22,10 +23,12 @@ main = do
       putStrLn $ "Parsing " ++ input
       plyData <- B.readFile input
       putStrLn $ "Encoding " ++ input
-      (Right encodedBin) <- pure $ buildEDX =<< encodeGeometry axis =<< parsePLY plyData
+--      (Right encodedBin) <- pure $ buildEDX =<< encodeGeometry axis =<< parsePLY plyData
+      (Right encodedBin) <- pure $ buildEDX' =<< encodeGeometry axis =<< parsePLY plyData
       let compressedFileName = filePathFormat ".edx" input
       putStrLn $ "Encoding completed! Writing " ++ compressedFileName
-      B.writeFile compressedFileName (B.pack encodedBin)
+--      BL.writeFile compressedFileName (B.pack encodedBin)
+      BL.writeFile compressedFileName encodedBin
       exitSuccess
     (Decode input) -> do
       putStrLn $ "Decoding " ++ input

@@ -2,7 +2,9 @@
 module Bitstream where
 
 import qualified Data.ByteString.Char8 as BC
-import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as B
+import Data.ByteString.Builder
+
 import Data.Char
 import Data.Word
 import Data.Bits
@@ -29,6 +31,9 @@ voxel2String (Voxel u v w) = uB ++ " "  ++ vB ++ " " ++ wB ++ "\n"
 buildEDX :: (Bin, PointCloudSize, Axis) -> Either String Bin
 buildEDX (b, s, a) = writeEDX b s a
 
+buildEDX' :: (Bin, PointCloudSize, Axis) -> Either String B.ByteString
+buildEDX' (b, s, a) = writeEDX' b s a
+
 writeEDX :: Bin -> PointCloudSize -> Axis -> Either String Bin
 writeEDX _ 0 _ = Left "Size without proper size!"
 writeEDX [] _ _ = Left "Encoding failed!"
@@ -36,6 +41,15 @@ writeEDX bin size axis = do
     let (padding, dataBin) = writeEDXData [] bin (Prelude.length bin)
     headerBin <- writeEDXHeader (fromIntegral size :: Word16) (combinePaddingWithAxis padding axis)
     Right $ headerBin ++ dataBin
+
+writeEDX' :: Bin -> PointCloudSize -> Axis -> Either String B.ByteString
+writeEDX' _ 0 _ = Left "Size without proper size!"
+writeEDX' [] _ _ = Left "Encoding failed!"
+writeEDX' bin size axis = do
+    let (padding, dataBin) = writeEDXData' mempty bin (Prelude.length bin)
+    headerBin <- writeEDXHeader (fromIntegral size :: Word16) (combinePaddingWithAxis padding axis)
+    Right $ B.pack headerBin <> toLazyByteString dataBin
+
 
 {- addPadding :: NumByte -> Bin -> Either String Bin
 addPadding nBytes bits
@@ -69,6 +83,15 @@ writeEDXData tcoded bin binSize
         where --binSize = Prelude.length bin
               padding = 8 - binSize
               finishTranscode = tcoded ++ [B.foldl' (\ res b -> res `shiftL` 1 + b) 0 (B.pack bin) `shiftL` padding]
+
+writeEDXData' :: Builder -> Bin -> Int -> (Padding, Builder)
+writeEDXData' tcoded bin binSize
+    | binSize >= 8   = writeEDXData' (tcoded <> (word8 $ transcode bin)) (drop 8 bin) (binSize - 8)
+    | binSize == 0   = (0, tcoded)
+    | otherwise      = (fromIntegral padding, finishTranscode)
+        where --binSize = Prelude.length bin
+              padding = 8 - binSize
+              finishTranscode = tcoded <> word8 (B.foldl' (\ res b -> res `shiftL` 1 + b) 0 (B.pack bin) `shiftL` padding)
 
 transcodeSide :: Bin -> [Byte]
 transcodeSide bin = [transcode (take 8 bin), transcode (drop 8 bin)]
