@@ -1,0 +1,120 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 6424f4e61df1260df6f14d439187971eff15f93e449f6b42c90f0f0f621d5439
+
+name:           hGeometryCoder
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/pointcloud-unb/hGeometryCoder#readme>
+homepage:       https://github.com/pointcloud-unb/hGeometryCoder#readme
+bug-reports:    https://github.com/pointcloud-unb/hGeometryCoder/issues
+author:         Edil Medeiros
+maintainer:     email@email.com
+copyright:      2021 Edil Medeiros
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/pointcloud-unb/hGeometryCoder
+
+library
+  exposed-modules:
+      Bitstream
+      Data.Input.DecoderParser
+      Data.Input.Parser
+      Data.Input.PLY
+      Data.Input.Types
+      Data.PLY
+      Data.PLY.Parser
+      Data.PLY.Types
+      Data.Structures.Image
+      Data.Structures.PCBitStream
+      Data.Structures.Pixel
+      Data.Structures.PointCloud
+      Data.Structures.Tree
+      Data.Structures.Voxel
+      Data.Utils
+      Dyadic
+      GPccDyadicCodec
+  other-modules:
+      Paths_hGeometryCoder
+  hs-source-dirs:
+      src
+  build-depends:
+      attoparsec
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , deepseq
+    , matrix
+    , text
+    , vector
+  default-language: Haskell2010
+
+executable hGeometryCoder
+  main-is: Main.hs
+  other-modules:
+      Paths_hGeometryCoder
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -O2
+  build-depends:
+      attoparsec
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , deepseq
+    , hGeometryCoder
+    , matrix
+    , text
+    , vector
+  default-language: Haskell2010
+
+test-suite hGeometryCoder-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_hGeometryCoder
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      attoparsec
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , deepseq
+    , hGeometryCoder
+    , matrix
+    , text
+    , vector
+  default-language: Haskell2010
+
+benchmark parser-bench
+  type: exitcode-stdio-1.0
+  main-is: ParserBench.hs
+  other-modules:
+      Paths_hGeometryCoder
+  hs-source-dirs:
+      benchmark
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      attoparsec
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , criterion
+    , deepseq
+    , hGeometryCoder
+    , matrix
+    , text
+    , vector
+  default-language: Haskell2010
