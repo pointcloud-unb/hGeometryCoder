@@ -1,4 +1,9 @@
+{-# LANGUAGE DeriveGeneric, DeriveAnyClass#-}
+
 module Data.Input.Types where
+
+import GHC.Generics (Generic, Generic1)
+import Control.DeepSeq
 
 import Data.ByteString (ByteString)
 import Data.Int (Int8, Int16)
@@ -7,30 +12,30 @@ import Data.Word (Word8, Word16, Word32)
 
 data PLY = PLY { plyHeader :: Header
                , plyData   :: [Values] }
-  deriving (Show)
+  deriving (Show, Generic, NFData)
 
 type Values = [Scalar]
 
 data Header = Header { hFormat :: Format
                      , hElems :: [Element] }
-  deriving (Show)
+  deriving (Show, Generic, NFData)
 
 data Format = ASCII      -- ^ ASCII
             | BinaryLE   -- ^ Binary Little Endian
             | BinaryBE   -- ^ Binary Big Endian
-            deriving (Show)
+            deriving (Show, Generic, NFData)
 
 data Element = Element { elName  :: !ByteString
                        , elNum   :: !Int
                        , elProps :: ![Property] }
-             deriving (Show)
+             deriving (Show, Generic, NFData)
 
 data Property = ScalarProperty { sPropType :: !ScalarType
                                , sPropName :: !ByteString }
               | ListProperty { lPropIndexType :: !ScalarType
                              , lPropType      :: !ScalarType
                              , lPropName      :: !ByteString }
-              deriving(Show)
+              deriving(Show, Generic, NFData)
 
 data ScalarType = CharT
                 | UcharT
@@ -40,7 +45,7 @@ data ScalarType = CharT
                 | UintT
                 | FloatT
                 | DoubleT
-                deriving (Eq, Show)
+                deriving (Eq, Show, Generic, NFData)
 
 data Scalar = CharS Int8
             | UcharS Word8
@@ -50,4 +55,4 @@ data Scalar = CharS Int8
             | UintS Word32
             | FloatS Float
             | DoubleS Double
-            deriving (Show)
+            deriving (Show, Generic, NFData)
