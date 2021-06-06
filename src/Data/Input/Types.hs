@@ -11,10 +11,13 @@ import Data.Word (Word8, Word16, Word32)
 
 
 data PLY = PLY { plyHeader :: Header
-               , plyData   :: [Values] }
+               , plyData   :: DataBlocks }
   deriving (Show, Generic, NFData)
 
-type Values = [Scalar]
+type DataBlocks = [DataLine]
+type DataLine = [Scalar]
+
+--type DataLine = 
 
 data Header = Header { hFormat :: Format
                      , hElems :: [Element] }

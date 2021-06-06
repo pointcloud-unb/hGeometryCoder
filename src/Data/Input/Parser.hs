@@ -19,7 +19,7 @@ vertex = "vertex" :: ByteString
 -- elementData :: Element -> Parser (Vector (Vector Scalar))
 -- elementData e = replicateM (elNum e)
 --                   (skipComments *> (fromList <$> dataLine (elProps e)))
-elementData :: Element -> Parser [Values]
+elementData :: Element -> Parser [DataLine]
 elementData e = count (elNum e)
                   (skipComments *> dataLine (elProps e))
 
