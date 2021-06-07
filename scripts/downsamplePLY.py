@@ -1,20 +1,15 @@
 import math as m
+import sys
 
-print("Insira o caminho do arquivo (.ply): ")
-
-filename = input()
+filename = sys.argv[1]
 
 extension = filename[-4:]
 
 name = filename[:-4]
 
-print("Bits do arquivo original: ")
+originalBits = int(sys.argv[2])
 
-originalBits = int(input())
-
-print("Bits do arquivo alvo: ")
-
-goalBits = int(input())
+goalBits = int(sys.argv[3])
 
 outputname = name + str(originalBits) + "to" + str(goalBits) + extension
 
