@@ -14,7 +14,7 @@
 
 - To execute:
 
-`$ stack exec -- storm-point-cloud-exe <option> <input_file_path> <axis>`
+`$ stack exec -- hGeometryCoder <option> <input_file_path> <axis>`
 
 Where:
 

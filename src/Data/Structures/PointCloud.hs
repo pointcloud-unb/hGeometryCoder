@@ -80,14 +80,14 @@ sliceToSilhoutte a (PointCloud v s) = ImageSparse (sliceToPixelList a (S.toList 
 sliceToPixelList :: Axis -> [Voxel] -> S.Set Pixel
 sliceToPixelList _ [] = S.empty
 sliceToPixelList X (Voxel _ v w : vs) = S.fromList [Pixel (v + 1) (w + 1)] `S.union` sliceToPixelList X vs
-sliceToPixelList Y (Voxel u _ w : vs) = S.fromList [Pixel (u + 1) (w + 1)] `S.union` sliceToPixelList Y vs
+sliceToPixelList Y (Voxel u _ w : vs) = S.fromList [Pixel (w + 1) (u + 1)] `S.union` sliceToPixelList Y vs
 sliceToPixelList Z (Voxel u v _ : vs) = S.fromList [Pixel (u + 1) (v + 1)] `S.union` sliceToPixelList Z vs
 
 addRasterToPointCloud :: Range -> Axis -> ImageRaster -> PointCloud -> PointCloud
 addRasterToPointCloud (coordinate,_) axis iR pc = pc <> PointCloud voxels (nrows iR)
     where voxels = S.fromList $ catMaybes (toList $ mapPos (\p a -> f p axis) iR)
-          f (j, i) ax
-            | not (getElem j i iR)  = Nothing
-            | ax == X               = Just $ Voxel coordinate (j - 1) (i - 1)
-            | ax == Y               = Just $ Voxel (i - 1) coordinate (j - 1)
-            | otherwise             = Just $ Voxel (j - 1) (i - 1) coordinate
+          f (lin, col) ax
+            | not (getElem lin col iR)  = Nothing
+            | ax == X               = Just $ Voxel coordinate (lin - 1)   (col - 1)
+            | ax == Y               = Just $ Voxel (lin - 1)  (col - 1)   coordinate
+            | otherwise             = Just $ Voxel (col - 1)  coordinate  (lin - 1)
