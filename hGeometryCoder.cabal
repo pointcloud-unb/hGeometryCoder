@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 6424f4e61df1260df6f14d439187971eff15f93e449f6b42c90f0f0f621d5439
+-- hash: c84bd3dfd7963db06ddbfefa89248980f7220b0c9f554dae43f070e63cbc72bb
 
 name:           hGeometryCoder
 version:        0.1.0.0
@@ -32,9 +32,6 @@ library
       Data.Input.Parser
       Data.Input.PLY
       Data.Input.Types
-      Data.PLY
-      Data.PLY.Parser
-      Data.PLY.Types
       Data.Structures.Image
       Data.Structures.PCBitStream
       Data.Structures.Pixel
