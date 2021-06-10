@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 916f7cdf7049168758a38951358371eadf764093e09d09ff9bb289c04efa9a33
+-- hash: f1147a3d93f360c879b1b9267865a2d65b99b31a3eebf15b9f5c45edf21cb230
 
 name:           hGeometryCoder
 version:        0.1.0.0
@@ -50,6 +50,7 @@ library
     , bytestring
     , containers
     , deepseq
+    , flat
     , matrix
     , text
     , vector
@@ -69,6 +70,7 @@ executable hGeometryCoder
     , bytestring
     , containers
     , deepseq
+    , flat
     , hGeometryCoder
     , matrix
     , text
@@ -89,6 +91,7 @@ test-suite hGeometryCoder-test
     , bytestring
     , containers
     , deepseq
+    , flat
     , hGeometryCoder
     , matrix
     , text
@@ -102,7 +105,7 @@ benchmark parser-bench
       Paths_hGeometryCoder
   hs-source-dirs:
       benchmark
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -O2 -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       attoparsec
     , base >=4.7 && <5
@@ -110,6 +113,7 @@ benchmark parser-bench
     , containers
     , criterion
     , deepseq
+    , flat
     , hGeometryCoder
     , matrix
     , text

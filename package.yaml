@@ -28,6 +28,7 @@ dependencies:
 - text
 - matrix
 - deepseq
+- flat
 
 library:
   source-dirs: src
@@ -60,6 +61,7 @@ benchmarks:
     main: ParserBench.hs
     source-dirs: benchmark
     ghc-options:
+      - -O2
       - -threaded
       - -rtsopts
       - -with-rtsopts=-N
