@@ -1,5 +1,7 @@
-module Data.Structures.Pixel where
-import Data.Utils
+
+module Codec.PointCloud.Types.Pixel where
+
+import Codec.PointCloud.Utils
 
 -- Pixel type
 data Pixel = Pixel Coordinate Coordinate

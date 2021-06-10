@@ -1,13 +1,14 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveFoldable #-}
 
-module Data.Structures.Tree where
+module Codec.PointCloud.Types.Tree where
 
-import Data.Structures.Image
-import Data.Structures.PointCloud
-import Data.Utils
+import Codec.PointCloud.Types.Image
+import Codec.PointCloud.Types.PointCloud
+import Codec.PointCloud.Types.PCBitStream
+import Codec.PointCloud.Utils
+
 import Data.Matrix as M
-import Data.Structures.PCBitStream
 
 type RangeTriForce = BinTree Range
 type OcuppancyTriForce = BinTree [Occupancy]

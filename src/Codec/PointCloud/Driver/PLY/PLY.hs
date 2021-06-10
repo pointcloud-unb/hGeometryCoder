@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Data.Input.PLY
+
+module Codec.PointCloud.Driver.PLY.PLY
   ( parsePLY
   ) where
 
@@ -7,8 +8,8 @@ module Data.Input.PLY
 import qualified Data.ByteString as B (ByteString)
 import Data.Attoparsec.ByteString.Char8 hiding (char)
 
-import Data.Input.Parser
-import Data.Input.Types
+import Codec.PointCloud.Driver.PLY.Parser
+import Codec.PointCloud.Driver.PLY.Types
 import Control.Monad (forM, join)
 
 parsePLY :: B.ByteString -> Either String PLY

@@ -1,5 +1,7 @@
-module Data.Structures.Voxel where
-import Data.Utils
+
+module Codec.PointCloud.Types.Voxel where
+
+import Codec.PointCloud.Utils
 import qualified Data.ByteString as B
 
 -- Voxel type

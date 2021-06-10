@@ -1,12 +1,14 @@
-module Data.Structures.PointCloud where
 
-import Data.List
-import Data.Structures.Image
-import Data.Structures.Pixel
+module Codec.PointCloud.Types.PointCloud where
+
+import Codec.PointCloud.Types.Image
+import Codec.PointCloud.Types.Pixel
+import Codec.PointCloud.Types.Voxel
+import Codec.PointCloud.Driver.PLY.Types
+import Codec.PointCloud.Utils
+
 import qualified Data.Set as S
-import Data.Utils
-import Data.Input.Types
-import Data.Structures.Voxel
+import Data.List
 import Data.Matrix
 import Data.Maybe
 

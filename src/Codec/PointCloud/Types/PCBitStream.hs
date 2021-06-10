@@ -1,6 +1,7 @@
-module Data.Structures.PCBitStream where
 
-import Data.Utils
+module Codec.PointCloud.Types.PCBitStream where
+
+import Codec.PointCloud.Utils
 import qualified Data.ByteString as B
 
 data Header = Header {axisH :: Axis

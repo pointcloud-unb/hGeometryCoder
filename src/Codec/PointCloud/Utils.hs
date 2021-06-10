@@ -1,8 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Data.Utils where
-  
+
+module Codec.PointCloud.Utils where
+
+import Codec.PointCloud.Driver.PLY.Types
+
 import Data.ByteString.Char8 (ByteString, unpack)
-import Data.Input.Types
 import Control.Applicative
 import Control.Monad (join)
 import Data.List (findIndex)

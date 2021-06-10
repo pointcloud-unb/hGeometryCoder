@@ -1,20 +1,23 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Dyadic where
 
-import qualified Data.ByteString as B
-import Data.Structures.PointCloud
-import Data.Structures.Voxel
-import Data.Structures.Tree
-import Data.Structures.Image
-import Data.Input.Types
-import Data.Utils
-import Bitstream
+module Codec.PointCloud.Compression.Dyadic where
+
+import Codec.PointCloud.Types.PointCloud
+import Codec.PointCloud.Types.Voxel
+import Codec.PointCloud.Types.Tree
+import Codec.PointCloud.Types.Image
+import Codec.PointCloud.Driver.PLY.Types
+import Codec.PointCloud.Driver.EDX.DecoderParser
+import Codec.PointCloud.Utils
+import Codec.PointCloud.Driver.Bitstream
+import qualified Codec.PointCloud.Types.PCBitStream as P
+
+
 import Data.Matrix
 import Data.Maybe
-import Data.Input.DecoderParser
-import qualified Data.Structures.PCBitStream as P
 import qualified Data.Set as S
 import qualified Data.Matrix as M
+import qualified Data.ByteString as B
 
 -- Encoder
 

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c84bd3dfd7963db06ddbfefa89248980f7220b0c9f554dae43f070e63cbc72bb
+-- hash: 184429ad3af5f226ce9ce9f8c48e908c2d97da2485a3cc4df52f0b44b1d9932a
 
 name:           hGeometryCoder
 version:        0.1.0.0
@@ -27,20 +27,19 @@ source-repository head
 
 library
   exposed-modules:
-      Bitstream
-      Data.Input.DecoderParser
-      Data.Input.Parser
-      Data.Input.PLY
-      Data.Input.Types
-      Data.Structures.Image
-      Data.Structures.PCBitStream
-      Data.Structures.Pixel
-      Data.Structures.PointCloud
-      Data.Structures.Tree
-      Data.Structures.Voxel
-      Data.Utils
-      Dyadic
-      GPccDyadicCodec
+      Codec.PointCloud.Compression.Dyadic
+      Codec.PointCloud.Driver.Bitstream
+      Codec.PointCloud.Driver.EDX.DecoderParser
+      Codec.PointCloud.Driver.PLY.Parser
+      Codec.PointCloud.Driver.PLY.PLY
+      Codec.PointCloud.Driver.PLY.Types
+      Codec.PointCloud.Types.Image
+      Codec.PointCloud.Types.PCBitStream
+      Codec.PointCloud.Types.Pixel
+      Codec.PointCloud.Types.PointCloud
+      Codec.PointCloud.Types.Tree
+      Codec.PointCloud.Types.Voxel
+      Codec.PointCloud.Utils
   other-modules:
       Paths_hGeometryCoder
   hs-source-dirs:

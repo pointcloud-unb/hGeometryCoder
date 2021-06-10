@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Data.Input.Parser where
+
+module Codec.PointCloud.Driver.PLY.Parser where
 
 import Control.Applicative
 import Data.Attoparsec.ByteString.Char8 hiding (char)
@@ -8,7 +9,7 @@ import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
 import Data.Vector (Vector, fromList, replicateM)
 
-import Data.Input.Types
+import Codec.PointCloud.Driver.PLY.Types
 
 e = [Element {elName = "faces", elNum = 5, elProps = [ScalarProperty {sPropType = FloatT, sPropName = "x2"},ScalarProperty {sPropType = FloatT, sPropName = "y2"}]},Element {elName = "vertexCoisa", elNum = 10, elProps = [ScalarProperty {sPropType = FloatT, sPropName = "x"},ScalarProperty {sPropType = FloatT, sPropName = "y"},ScalarProperty {sPropType = FloatT, sPropName = "z"},ScalarProperty {sPropType = UcharT, sPropName = "red"},ScalarProperty {sPropType = UcharT, sPropName = "green"},ScalarProperty {sPropType = UcharT, sPropName = "blue"}]}]
 

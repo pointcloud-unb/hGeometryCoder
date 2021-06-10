@@ -1,11 +1,13 @@
 module Main where
 
-import Data.Utils
-import Dyadic
-import Data.Input.PLY
+import Codec.PointCloud.Utils
+import Codec.PointCloud.Compression.Dyadic
+import Codec.PointCloud.Driver.PLY.PLY
+import Codec.PointCloud.Driver.Bitstream
+
+
 import qualified Data.ByteString as B (readFile, writeFile, pack)
 import qualified Data.ByteString.Lazy as BL (writeFile)
-import Bitstream
 import System.Exit (exitSuccess, exitFailure)
 import System.Environment
 

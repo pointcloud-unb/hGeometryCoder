@@ -1,10 +1,11 @@
-module Data.Structures.Image where
+
+module Codec.PointCloud.Types.Image where
 
 import Data.List
 import Data.Matrix
 import qualified Data.Set as S
-import Data.Structures.Pixel
-import Data.Utils
+import Codec.PointCloud.Types.Pixel
+import Codec.PointCloud.Utils
 
 -- Image Sparced type
 data ImageSparse = ImageSparse { sPixels :: S.Set Pixel

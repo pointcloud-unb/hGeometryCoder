@@ -1,18 +1,21 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Bitstream where
+
+module Codec.PointCloud.Driver.Bitstream where
+
+import Codec.PointCloud.Utils
+import Codec.PointCloud.Types.PointCloud
+import Codec.PointCloud.Types.Voxel
+
 
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy as B
-import Data.ByteString.Builder
+import qualified Data.Set as S
 
+import Data.ByteString.Builder
 import Data.Char
 import Data.Word
 import Data.Bits
 import Data.List
-import Data.Utils
-import Data.Structures.PointCloud
-import Data.Structures.Voxel
-import qualified Data.Set as S
 
 --fixedHeader :: PointCloudSize -> B.ByteString
 --fixedHeader s = B.pack (fromIntegral s :: Word16)

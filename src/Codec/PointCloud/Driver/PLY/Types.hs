@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveGeneric, DeriveAnyClass#-}
 
-module Data.Input.Types where
+module Codec.PointCloud.Driver.PLY.Types where
 
 import GHC.Generics (Generic, Generic1)
 import Control.DeepSeq

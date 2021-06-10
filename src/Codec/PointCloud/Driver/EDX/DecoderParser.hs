@@ -1,10 +1,13 @@
-module Data.Input.DecoderParser where
+
+module Codec.PointCloud.Driver.EDX.DecoderParser where
+
+import Codec.PointCloud.Types.PCBitStream
+import Codec.PointCloud.Utils
 
 import Control.Applicative
 import qualified Data.ByteString as B
-import Data.Structures.PCBitStream
-import Data.Utils
 import Data.Bits
+
 -- Decoder parser
 newtype Parser a = Parser { runParser :: B.ByteString -> Maybe (B.ByteString, a) }
 
