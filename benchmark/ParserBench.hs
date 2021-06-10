@@ -1,7 +1,7 @@
 
 module Main where
 
-import Data.Input.PLY
+import Codec.PointCloud.Driver.PLY.PLY
 
 import Criterion.Main
 import Criterion.Types
@@ -17,16 +17,20 @@ myConfig = defaultConfig {
   }
 
 myEnv = do
-  ddd32 <- B.readFile "test_files/DDD32.ply" -- 17952 points
-  ddd64 <- B.readFile "test_files/DDD64.ply" -- 144554 points
-  return (ddd32, ddd64)
+  dustDense5 <- B.readFile "assets/dustDense5.ply" -- 17952 points
+  dustDense6 <- B.readFile "assets/dustDense6.ply" -- 144554 points
+  ricardo9 <- B.readFile "assets/ricardo9_frame0000.ply" -- 214656 points
+  ricardo10 <- B.readFile "assets/ricardo10_frame0000.ply" -- 960703 points
+  return (dustDense5, dustDense6, ricardo9, ricardo10)
 
 -- Our benchmark harness.
 main = do
   defaultMainWith myConfig [
-    env myEnv $ \ ~(ddd32, ddd64) ->
+    env myEnv $ \ ~(dustDense5, dustDense6, ricardo9, ricardo10) ->
         bgroup "ply/parser"
-        [ bench "DDD32.ply" $ nf parsePLY ddd32
-        , bench "DDD64.ply" $ nf parsePLY ddd64
+        [ bench "dustDense5.ply" $ nf parsePLY dustDense5
+        , bench "dustDense6.ply" $ nf parsePLY dustDense6
+        , bench "ricardo9.ply" $ nf parsePLY ricardo9
+        , bench "ricardo10.ply" $ nf parsePLY ricardo10
         ]
     ]
