@@ -49,10 +49,10 @@ reordenate X (Voxel u v w) = Voxel u v w
 reordenate Y (Voxel u v w) = Voxel v w u
 reordenate Z (Voxel u v w) = Voxel w u v
 
-computePCLimit :: [Voxel] -> PointCloudSize
-computePCLimit v = maximum [maxU - minU, maxV - minV, maxW - minW]
-  where (maxU, maxV, maxW) = maxLimit v
-        (minU, minV, minW) = minLimit v
+-- computePCLimit :: [Voxel] -> PointCloudSize
+-- computePCLimit v = maximum [maxU - minU, maxV - minV, maxW - minW]
+--   where (maxU, maxV, maxW) = maxLimit v
+--         (minU, minV, minW) = minLimit v
 
 computePCLimit' :: [Voxel] -> PointCloudSize
 computePCLimit' = foldr (max . largestDimension) 0
