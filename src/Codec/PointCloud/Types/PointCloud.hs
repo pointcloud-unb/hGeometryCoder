@@ -12,6 +12,23 @@ import Data.List
 import Data.Matrix
 import Data.Maybe
 
+
+--class Cloud where
+  --empty :: PointCloudSize -> PointCloud
+  --null :: PointCloud -> Bool
+  --addVoxel :: Voxel -> PointCloud -> PointCloud
+  --removeVoxel :: Voxel -> PointCloud -> PointCloud
+
+--class Sliceable where
+  --slice :: Axis -> Range -> PointCloud -> PointCloud
+
+--class Explodable where
+  --explode :: PointCloud -> [PointCloud]
+
+--class Lightable where
+  --silhouette :: (Image a) => Axis -> PointCloud -> a
+
+
 -- Point Cloud type
 data PointCloud = PointCloud { pcVoxels :: S.Set Voxel
                              , pcSize   :: Int}
@@ -26,6 +43,7 @@ instance Monoid PointCloud where
 instance Eq PointCloud where
   (PointCloud voxel_set_1 size1) ==
     (PointCloud voxel_set_2 size2) = voxel_set_1 == voxel_set_2 && size1 == size2
+
 
 addVoxel :: PointCloud -> Voxel -> PointCloud
 addVoxel (PointCloud set size) voxel = PointCloud (S.insert voxel set) size
