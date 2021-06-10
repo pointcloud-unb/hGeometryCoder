@@ -4,6 +4,11 @@ module Codec.PointCloud.Types.Voxel where
 import Codec.PointCloud.Utils
 import qualified Data.ByteString as B
 
+--class (Eq a, Ord a) => Voxel a where
+--  unpack :: Voxel a -> (Coordinate, Coordinate, Coordinate)
+--  largestDimension :: Voxel -> Int
+
+
 -- Voxel type
 data Voxel = Voxel { getU :: Coordinate
                    , getV :: Coordinate
