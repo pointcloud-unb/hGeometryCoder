@@ -47,16 +47,14 @@ extractPadAxis :: Byte -> (Padding, Axis)
 extractPadAxis b = (b `shiftR` 4, bin2Axis $ b .&. 0x0F)
 
 -- Transform next 2 bytes to an int, i.e, size of pointcloud
-extractPCSize :: (Byte, Byte) -> PointCloudSize
-extractPCSize (b1, b2) = fComplete $ fShift ((0 :: Int) .|. fromIntegral b1)
-    where fShift x = x `shiftL` 8 :: Int
-          fComplete x = x .|. fromIntegral b2 :: Int
+extractPCSize :: Byte -> PointCloudSize
+extractPCSize b = 2^(fromIntegral b :: Int)
 
 bitstreamPC :: B.ByteString -> Maybe PCBitStream
 bitstreamPC input = do
     (input', padAxis) <- runParser byteP input
-    (payload, pcSizeBytes) <- runParser sizeP input'
+    (payload, pcSizeBits) <- runParser byteP input'
     let (padding, axis) = extractPadAxis padAxis
-    let size = extractPCSize pcSizeBytes
+    let size = extractPCSize pcSizeBits
     return $ PCBitStream padding axis size payload
     

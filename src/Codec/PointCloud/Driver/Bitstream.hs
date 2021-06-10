@@ -42,7 +42,7 @@ writeEDX _ 0 _ = Left "Size without proper size!"
 writeEDX [] _ _ = Left "Encoding failed!"
 writeEDX bin size axis = do
     let (padding, dataBin) = writeEDXData [] bin (Prelude.length bin)
-    headerBin <- writeEDXHeader (fromIntegral size :: Word16) (combinePaddingWithAxis padding axis)
+    headerBin <- writeEDXHeader size (combinePaddingWithAxis padding axis)
     Right $ headerBin ++ dataBin
 
 writeEDX' :: Bin -> PointCloudSize -> Axis -> Either String B.ByteString
@@ -50,7 +50,7 @@ writeEDX' _ 0 _ = Left "Size without proper size!"
 writeEDX' [] _ _ = Left "Encoding failed!"
 writeEDX' bin size axis = do
     let (padding, dataBin) = writeEDXData' mempty bin (Prelude.length bin)
-    headerBin <- writeEDXHeader (fromIntegral size :: Word16) (combinePaddingWithAxis padding axis)
+    headerBin <- writeEDXHeader size (combinePaddingWithAxis padding axis)
     Right $ B.pack headerBin <> toLazyByteString dataBin
 
 
@@ -73,9 +73,9 @@ integral2BitList :: (FiniteBits b) => b -> Bin
 integral2BitList x = reverse $ map (f . testBit x) [0..(finiteBitSize x - 1)]
     where f y = if y then 1 else 0
 
-writeEDXHeader :: (FiniteBits b) => b -> LateralInfo -> Either String Bin
-writeEDXHeader size padAxis = Right $ padAxis : transcodeSide binary
-    where binary = integral2BitList size
+writeEDXHeader :: PointCloudSize -> LateralInfo -> Either String Bin
+writeEDXHeader size padAxis = Right [padAxis, transcode binary]
+    where binary = integral2BitList (fromIntegral $ computeNBits size :: Word8)
     
 
 writeEDXData :: [Byte] -> Bin -> Int -> (Padding, Bin)
@@ -89,7 +89,7 @@ writeEDXData tcoded bin binSize
 
 writeEDXData' :: Builder -> Bin -> Int -> (Padding, Builder)
 writeEDXData' tcoded bin binSize
-    | binSize >= 8   = writeEDXData' (tcoded <> (word8 $ transcode bin)) (drop 8 bin) (binSize - 8)
+    | binSize >= 8   = writeEDXData' (tcoded <> word8 (transcode bin)) (drop 8 bin) (binSize - 8)
     | binSize == 0   = (0, tcoded)
     | otherwise      = (fromIntegral padding, finishTranscode)
         where --binSize = Prelude.length bin
