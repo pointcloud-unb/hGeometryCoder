@@ -2,7 +2,7 @@
 
 module Codec.PointCloud.Driver.PLY.Types where
 
-import GHC.Generics (Generic, Generic1)
+import GHC.Generics (Generic)
 import Control.DeepSeq
 
 import Data.ByteString (ByteString)
