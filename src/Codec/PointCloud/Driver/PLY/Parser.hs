@@ -3,6 +3,7 @@
 module Codec.PointCloud.Driver.PLY.Parser where
 
 import Control.Applicative
+import Control.Monad (join, forM)
 import Data.Attoparsec.ByteString.Char8 hiding (char)
 import Data.ByteString.Char8 (ByteString, pack)
 import Data.Int (Int8, Int16)
@@ -30,6 +31,13 @@ header :: Parser Header
 header = Header <$> preamble <*> elements <* "end_header" <* endOfLine
   where preamble = "ply" *> endOfLine *> format <* skipSpace
         elements = many1 (skipComments *> element <* skipSpace)
+
+ply :: Parser PLY
+ply = do
+  parsedHeader <- header
+  let dataParser = join <$> forM (hElems parsedHeader) elementData
+  dataBlocks <- dataParser
+  return $ PLY parsedHeader dataBlocks
 
 format :: Parser Format
 format = "format" *> skipSpace *> (ascii <|> binaryLE <|> binaryBE)
