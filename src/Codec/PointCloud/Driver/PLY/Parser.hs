@@ -124,7 +124,8 @@ dataLine' ps = getDataLine S.empty ps
       x <- scalar indexT
       skipSpace
       let c = scalarInt x
-      S.fromList <$> count c (scalar propT <* skipSpace)
+      --S.fromList <$> count c (scalar propT <* skipSpace)
+      S.replicateM c (scalar propT <* skipSpace)
 
 
 -- | Extract an Int from the Scalar types. Return 0 if float or double.
