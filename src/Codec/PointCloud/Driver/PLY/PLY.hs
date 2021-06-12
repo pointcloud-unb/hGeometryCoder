@@ -12,13 +12,14 @@ import Codec.PointCloud.Driver.PLY.Parser
 import Codec.PointCloud.Driver.PLY.Types
 import Control.Monad (forM, join)
 
+--
 parsePLY :: B.ByteString -> Either String PLY
 parsePLY b = do
           resultHeader <- loadHeader b
           case resultHeader of
             (Done r parsedHeader) ->
               let dataParser = forM (hElems parsedHeader) elementData
-              in case parseOnly dataParser r of
+              in case parseOnly dataParser r of 
                 (Left _) -> Left "Invalid data"
                 (Right x) -> return $ PLY parsedHeader (join x)
             _ -> Left "Something crazy happenned"

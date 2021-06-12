@@ -9,6 +9,8 @@ import Data.ByteString (ByteString)
 import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
 
+--import Data.Vector
+
 
 data PLY = PLY { plyHeader :: Header
                , plyData   :: DataBlocks }

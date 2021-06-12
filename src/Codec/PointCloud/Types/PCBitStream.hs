@@ -28,6 +28,8 @@ data EDXError
   | EDXExcessData String
   deriving (Show)
 
+
+
 data EDX = EDX { edxHeader :: EDXHeader
                , edxPayload :: EDXPayload }
            deriving (Eq, Show, Generic, Flat)
