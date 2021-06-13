@@ -7,8 +7,9 @@ import Codec.PointCloud.Utils
 type Format = String
 data Args = Encode { inputPath :: FilePath
                     , axis :: Axis}
-            | Decode { inputPath :: FilePath}
-            | Error {errorMessage :: String}
+            | Decode { inputPath :: FilePath }
+            | Parse { inputPath :: FilePath }
+            | Error { errorMessage :: String }
 
 
 filePathFormat :: FilePath -> FilePath -> FilePath
@@ -44,6 +45,7 @@ parseArgs :: [String] -> Args
 parseArgs (operation:input:arg1)
   | operation == "-e" = checkArgsEncode input (head arg1)
   | operation == "-d" = checkArgsDecode input
+  | operation == "-p" = Parse input
   | otherwise         = Error "Invalid operation!"
 parseArgs _ = Error "Invalid arguments!"
 

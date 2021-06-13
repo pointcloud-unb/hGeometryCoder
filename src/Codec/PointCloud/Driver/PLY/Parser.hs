@@ -1,6 +1,11 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, BangPatterns #-}
 
-module Codec.PointCloud.Driver.PLY.Parser where
+module Codec.PointCloud.Driver.PLY.Parser (
+  parsePLY1
+  , parsePLY'
+  , elementData
+  , header  
+  ) where
 
 import Codec.PointCloud.Driver.PLY.Types
 
@@ -29,6 +34,15 @@ pHeader = fromRight undefined $ parseOnly header file
 e1 = head $ hElems pHeader
 e1props = elProps e1
 
+
+
+parsePLY1 :: ByteString -> Either String PLY
+parsePLY1 = parseOnly (ply <* endOfInput) 
+
+parsePLY' :: ByteString -> Either String PLY'
+parsePLY' = parseOnly (ply' <* endOfInput) 
+
+
 -- * Header parser
 -- | Parse the PLY header
 header :: Parser Header
@@ -38,17 +52,17 @@ header = Header <$> preamble <*> elements <* "end_header" <* endOfLine
 
 ply :: Parser PLY
 ply = do
-  parsedHeader <- header
+  !parsedHeader <- header
   let dataParser = join <$> forM (hElems parsedHeader) elementData
-  dataBlocks <- dataParser
-  return $ PLY parsedHeader dataBlocks
+  !dataBlocks <- dataParser
+  return $! PLY parsedHeader dataBlocks
 
 ply' :: Parser PLY'
 ply' = do
-  parsedHeader <- header
+  !parsedHeader <- header
   let dataParser = join <$> forM (S.fromList $ hElems parsedHeader) elementData'
-  dataBlocks <- dataParser
-  return $ PLY' parsedHeader dataBlocks
+  !dataBlocks <- dataParser
+  return $! PLY' parsedHeader dataBlocks
 
 
 
@@ -58,10 +72,14 @@ ply' = do
 -- elementData e = replicateM (elNum e)
 --                   (skipComments *> (fromList <$> dataLine (elProps e)))
 elementData :: Element -> Parser [DataLine]
+{-# INLINE elementData #-}
 elementData e = count (elNum e)
                   (skipComments *> dataLine (elProps e))
 
+
+
 elementData' :: Element -> Parser DataBlocks'
+{-# INLINE elementData' #-}
 elementData' e = S.replicateM (elNum e) (skipComments *> dataLine' (elProps e))
 
 
@@ -98,13 +116,14 @@ scalarType = choice $
 
 -- * Data parser
 dataLine :: [Property] -> Parser DataLine
+{-# INLINE dataLine #-}
 dataLine = getData []
   where
     getData ds [] = pure (reverse ds)
-    getData ds (ScalarProperty t _:ps) = do x <- scalar t
+    getData ds (ScalarProperty t _:ps) = do !x <- scalar t
                                             skipSpace
                                             getData (x:ds) ps
-    getData _ (ListProperty th td _:_) = do x <- scalar th
+    getData _ (ListProperty th td _:_) = do !x <- scalar th
                                             skipSpace
                                             let c = scalarInt x
                                             count c (scalar td <* skipSpace)
@@ -112,16 +131,17 @@ dataLine = getData []
 
 -- * Data parser
 dataLine' :: [Property] -> Parser DataLine'
+{-# INLINE dataLine' #-}
 dataLine' ps = getDataLine S.empty ps 
   where
     getDataLine dl [] = return dl
     getDataLine dl (ScalarProperty propT _:ps) = do
-      x <- scalar propT
+      !x <- scalar propT
       skipSpace
       getDataLine (dl S.|> x) ps
     -- The following considers that we don't get scalar properties after list properties.
     getDataLine dl (ListProperty indexT propT _:_) = do
-      x <- scalar indexT
+      !x <- scalar indexT
       skipSpace
       let c = scalarInt x
       --S.fromList <$> count c (scalar propT <* skipSpace)
@@ -130,6 +150,7 @@ dataLine' ps = getDataLine S.empty ps
 
 -- | Extract an Int from the Scalar types. Return 0 if float or double.
 scalarInt :: Scalar -> Int
+{-# INLINE scalarInt #-}
 scalarInt (CharS n)   = fromIntegral n
 scalarInt (UcharS n)  = fromIntegral n
 scalarInt (ShortS n)  = fromIntegral n
@@ -140,6 +161,7 @@ scalarInt _ = 0
 
 -- * Scalar parser
 scalar :: ScalarType -> Parser Scalar
+{-# INLINE scalar #-}
 scalar CharT   = CharS   <$> char
 scalar UcharT  = UcharS  <$> uchar
 scalar ShortT  = ShortS  <$> int16
@@ -151,24 +173,31 @@ scalar DoubleT = DoubleS <$> double
 
 -- * Numeric parsers
 char :: Parser Int8
+{-# INLINE char #-}
 char = signed decimal
 
 uchar :: Parser Word8
+{-# INLINE uchar #-}
 uchar = decimal
 
 int16 :: Parser Int16
+{-# INLINE int16 #-}
 int16 = signed decimal
 
 uint16 :: Parser Word16
+{-# INLINE uint16 #-}
 uint16 = decimal
 
 int :: Parser Int
+{-# INLINE int #-}
 int = signed decimal
 
 uint :: Parser Word32
+{-# INLINE uint #-}
 uint = decimal
 
 float :: Parser Float
+{-# INLINE float #-}
 float = realToFrac <$> double
 
 -- double implemented by attoparsec already

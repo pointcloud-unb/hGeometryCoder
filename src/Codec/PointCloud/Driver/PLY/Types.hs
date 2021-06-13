@@ -13,12 +13,12 @@ import qualified Data.Sequence as S
 --import Data.Vector
 
 
-data PLY = PLY { plyHeader :: Header
-               , plyData   :: DataBlocks }
+data PLY = PLY { plyHeader :: !Header
+               , plyData   :: !DataBlocks }
   deriving (Show, Generic, NFData)
 
-data PLY' = PLY' { plyHeader' :: Header
-                 , plyData'   :: DataBlocks' }
+data PLY' = PLY' { plyHeader' :: !Header
+                 , plyData'   :: !DataBlocks' }
   deriving (Show, Generic, NFData)
 
 type DataBlocks = [DataLine]
@@ -29,8 +29,8 @@ type DataLine' = S.Seq Scalar
 
 --type DataLine = 
 
-data Header = Header { hFormat :: Format
-                     , hElems :: [Element] }
+data Header = Header { hFormat :: !Format
+                     , hElems  :: ![Element] }
   deriving (Show, Generic, NFData)
 
 data Format = ASCII      -- ^ ASCII
@@ -60,12 +60,12 @@ data ScalarType = CharT
                 | DoubleT
                 deriving (Eq, Show, Generic, NFData)
 
-data Scalar = CharS Int8
-            | UcharS Word8
-            | ShortS Int16
-            | UshortS Word16
-            | IntS Int
-            | UintS Word32
-            | FloatS Float
-            | DoubleS Double
+data Scalar = CharS   !Int8
+            | UcharS  !Word8
+            | ShortS  !Int16
+            | UshortS !Word16
+            | IntS    !Int
+            | UintS   !Word32
+            | FloatS  !Float
+            | DoubleS !Double
             deriving (Show, Generic, NFData)
