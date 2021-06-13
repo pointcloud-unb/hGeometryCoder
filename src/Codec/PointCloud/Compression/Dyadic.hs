@@ -56,7 +56,8 @@ applyMaskEncoder = elementwise f
 -- Decoder
 
 decodeGeometry :: EDX -> Either String PointCloud
-decodeGeometry (EDX (EDXHeader _ axis _ size _) payload) = do
+decodeGeometry (EDX (EDXHeader _ axis _ bitSize _) payload) = do
+                                        let size = 2^ fromIntegral bitSize
                                         let (root, rest) = extractData payload size
                                         let rootSilhoutte =  map (== 1) root
                                         let tfr = triForceTreeRange (0, size - 1)

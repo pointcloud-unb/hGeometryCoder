@@ -29,7 +29,7 @@ data EDX = EDX { edxHeader :: EDXHeader
 data EDXHeader = EDXHeader { edxMagicWord    :: B.ByteString
                            , edxAxis         :: Axis
                            , edxMode         :: Mode
-                           , edxPCSize       :: PointCloudSize
+                           , edxPCSize       :: PointCloudSizeBits
                            , edxCodecVersion :: Version
                            }
                  deriving (Eq, Show, Generic, Flat)

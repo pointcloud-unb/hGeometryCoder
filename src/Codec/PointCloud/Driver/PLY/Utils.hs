@@ -7,7 +7,6 @@ import Codec.PointCloud.Utils
 
 import Data.ByteString.Char8 (unpack)
 
-
 import Data.List (findIndex)
 
 filterFromLabel :: Label -> PLY -> Either String PLY

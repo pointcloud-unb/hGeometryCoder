@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 {-# OPTIONS_GHC -Wno-overlapping-patterns #-}
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 module Codec.PointCloud.Driver.EDX.Bitstream (
     encodeEDX
   , decodeEDX
@@ -15,6 +16,7 @@ import Codec.PointCloud.Driver.EDX.Types
 import Codec.PointCloud.Utils
 import Data.ByteString.Builder
 import Data.Bits
+import Data.Word
 
 encodeEDX :: EDX -> B.ByteString
 encodeEDX = flat
@@ -36,8 +38,9 @@ readEDX :: FilePath -> IO (Either String EDX)
 readEDX file = decodeEDX <$> B.readFile file
 
 buildEDX :: (Bin, PointCloudSize, Axis) -> Either String EDX
-buildEDX (b, ps, a)= Right $ EDX (EDXHeader ourMagicWord a Normal ps currentVersion) dataBin
+buildEDX (b, ps, a) = Right $ EDX (EDXHeader ourMagicWord a Normal bps currentVersion) dataBin
   where dataBin = toLazyByteString $ writeEDXData mempty b (Prelude.length b)
+        bps = transcode $ integral2BitList (fromIntegral $ computeNBits ps :: Word8)
 
 writeEDXData :: Builder -> Bin -> Int -> Builder
 writeEDXData tcoded bin binSize
@@ -57,6 +60,7 @@ transcode (b1:b2:b3:b4:b5:b6:b7:b8:_) =
     b6 `shiftL` 2 .|.
     b7 `shiftL` 1 .|. b8
 
+-------------------------- DEPRECATED --------------------------
 --import Codec.PointCloud.Utils
 --import Codec.PointCloud.Types.PointCloud
 --import Codec.PointCloud.Types.Voxel
@@ -67,7 +71,6 @@ transcode (b1:b2:b3:b4:b5:b6:b7:b8:_) =
 --import Data.Word
 --import Data.Bits
 
--- DEPRECATED
 -- buildEDX :: (Bin, PointCloudSize, Axis) -> Either String Bin
 -- buildEDX (b, s, a) = writeEDX b s a
 

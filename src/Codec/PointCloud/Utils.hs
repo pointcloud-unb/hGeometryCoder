@@ -18,6 +18,7 @@ import qualified Data.Set as S
 type Range = (Int, Int)
 type Label = ByteString
 type PointCloudSize = Int
+type PointCloudSizeBits = Word8
 type Coordinate = Int
 type Index = Int
 type Bit = Word8
