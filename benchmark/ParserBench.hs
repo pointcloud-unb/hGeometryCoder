@@ -1,12 +1,11 @@
 
 module Main where
 
-import Codec.PointCloud.Driver.PLY.Parser (ply, ply')
+import Codec.PointCloud.Driver.PLY.Parser (parsePLY1, parsePLY')
 
 import Criterion.Main
 import Criterion.Types
 
-import Data.Attoparsec.Char8 (parseOnly)
 import qualified Data.ByteString as B (readFile)
 
 
@@ -29,17 +28,13 @@ main = do
   defaultMainWith myConfig [
     env myEnv $ \ ~(dustDense5, dustDense6, ricardo9, ricardo10) ->
         bgroup "ply/parser"
-        [ bench "dustDense5.ply" $ nf (parseOnly ply) dustDense5
-        , bench "dustDense6.ply" $ nf (parseOnly ply) dustDense6
-        , bench "ricardo9.ply" $ nf (parseOnly ply) ricardo9
-        , bench "ricardo10.ply" $ nf (parseOnly ply) ricardo10
-        ],
-    env myEnv $ \ ~(dustDense5, dustDense6, ricardo9, ricardo10) ->
-      bgroup "ply/parser-sequence"
-        [ bench "dustDense5.ply" $ nf (parseOnly ply') dustDense5
-        , bench "dustDense6.ply" $ nf (parseOnly ply') dustDense6
-        , bench "ricardo9.ply" $ nf (parseOnly ply') ricardo9
-        , bench "ricardo10.ply" $ nf (parseOnly ply') ricardo10
+        [ bench "dustDense5.ply" $ nf parsePLY1 dustDense5
+        -- , bench "dustDense6.ply" $ nf parsePLY1  dustDense6
+        -- , bench "ricardo9.ply" $ nf parsePLY1 ricardo9
+        -- , bench "ricardo10.ply" $ nf parsePLY1 ricardo10
+        -- , bench "seq-dustDense5.ply" $ nf parsePLY' dustDense5
+        -- , bench "seq-dustDense6.ply" $ nf parsePLY' dustDense6
+        -- , bench "seq-ricardo9.ply" $ nf parsePLY' ricardo9
+        -- , bench "seq-ricardo10.ply" $ nf parsePLY' ricardo10
         ]
-        
     ]

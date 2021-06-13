@@ -4,13 +4,18 @@ import CLI
 
 import Codec.PointCloud.Utils
 import Codec.PointCloud.Compression.Dyadic
-import Codec.PointCloud.Driver.PLY.Bitstream
+import Codec.PointCloud.Driver.PLY.PLY
+import Codec.PointCloud.Driver.PLY.Parser (parsePLY1, parsePLY')
+import Codec.PointCloud.Driver.Bitstream
+
 
 import Codec.PointCloud.Driver.EDX.Bitstream
 import qualified Data.ByteString as B (readFile, writeFile, pack)
 import qualified Data.ByteString.Lazy as BL (writeFile)
 import System.Exit (exitSuccess, exitFailure)
 import System.Environment
+import Control.DeepSeq (force)
+import Control.Exception (evaluate)
 
 
 main :: IO ()
@@ -36,6 +41,10 @@ main = do
       putStrLn $ "Decoding completed! Writing " ++ decompressedFileName
       B.writeFile decompressedFileName pc
       exitSuccess
+    (Parse input) -> do
+      fileContents <- B.readFile input
+      parsed <- evaluate $ force $ parsePLY1 fileContents
+      putStrLn $ "Parse finished"
     (Error mError) -> do
       putStrLn mError
       exitFailure
