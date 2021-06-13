@@ -5,7 +5,6 @@ module Codec.PointCloud.Types.Tree where
 
 import Codec.PointCloud.Types.Image
 import Codec.PointCloud.Types.PointCloud
-import Codec.PointCloud.Types.PCBitStream
 import Codec.PointCloud.Utils
 
 import Data.Matrix as M
@@ -81,7 +80,7 @@ rTriForce2OTriForce root b = (Node root (Leaf left) (Leaf right), b'')
         (right, b'') = computeRightSilhouette root left [] b'
 
 -- triForceR2PC :: PointCloud -> RangeTriForceTree -> TriforceRoot -> Bin -> (PointCloud, IRasterTriForceTree, Bin)
-triForceR2PC :: PointCloud -> RangeTriForceTree -> TriForceRoot -> Bin -> Header -> (PointCloud, OcuppancyTriForceTree, Bin)
+triForceR2PC :: PointCloud -> RangeTriForceTree -> TriForceRoot -> Bin -> (Axis, PointCloudSize) -> (PointCloud, OcuppancyTriForceTree, Bin)
 triForceR2PC pc (Leaf rT) root b h = (leafNodes2PC pc rT oL oR h, Leaf (Node oC (Leaf oL) (Leaf oR)), b')
   where (Node oC (Leaf oL) (Leaf oR), b') = rTriForce2OTriForce root b
 triForceR2PC pc (Node _ rTfTreeL rTfTreeR) root b h = (pc'', Node (Node oTfC (Leaf oTfL) (Leaf oTfR)) oTfTreeL oTfTreeR, b''')
@@ -89,9 +88,7 @@ triForceR2PC pc (Node _ rTfTreeL rTfTreeR) root b h = (pc'', Node (Node oTfC (Le
         (pc',oTfTreeL, b'') = triForceR2PC pc rTfTreeL oTfL b' h
         (pc'',oTfTreeR, b''') = triForceR2PC pc' rTfTreeR oTfR b'' h
 
-leafNodes2PC :: PointCloud -> RangeTriForce -> [Occupancy] -> [Occupancy] -> Header -> PointCloud
-leafNodes2PC pc (Node _ (Leaf rL) (Leaf rR)) leftL rightL h = pc''
-  where axis = axisH h
-        side = pcSizeH h
-        pc' = addRasterToPointCloud rL axis (occupancyList2Raster side leftL) pc
+leafNodes2PC :: PointCloud -> RangeTriForce -> [Occupancy] -> [Occupancy] -> (Axis, PointCloudSize) -> PointCloud
+leafNodes2PC pc (Node _ (Leaf rL) (Leaf rR)) leftL rightL (axis, side) = pc''
+  where pc' = addRasterToPointCloud rL axis (occupancyList2Raster side leftL) pc
         pc'' = addRasterToPointCloud rR axis (occupancyList2Raster side rightL) pc'
