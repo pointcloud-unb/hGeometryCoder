@@ -5,7 +5,7 @@ import CLI
 import Codec.PointCloud.Utils
 import Codec.PointCloud.Compression.Dyadic
 import Codec.PointCloud.Driver.PLY.PLY
-import Codec.PointCloud.Driver.PLY.Parser (parsePLY1, parsePLY')
+import Codec.PointCloud.Driver.PLY.Parser (parsePLY1)
 import Codec.PointCloud.Driver.Bitstream
 
 
