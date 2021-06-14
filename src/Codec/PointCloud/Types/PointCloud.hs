@@ -6,6 +6,7 @@ import Codec.PointCloud.Types.Pixel
 import Codec.PointCloud.Types.Voxel
 import Codec.PointCloud.Driver.PLY.Types
 import Codec.PointCloud.Utils
+import Codec.PointCloud.Driver.PLY.Utils
 
 import qualified Data.Set as S
 import Data.List

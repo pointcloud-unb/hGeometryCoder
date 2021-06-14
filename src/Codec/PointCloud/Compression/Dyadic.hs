@@ -7,17 +7,17 @@ import Codec.PointCloud.Types.Voxel
 import Codec.PointCloud.Types.Tree
 import Codec.PointCloud.Types.Image
 import Codec.PointCloud.Driver.PLY.Types
-import Codec.PointCloud.Driver.EDX.DecoderParser
+import Codec.PointCloud.Driver.EDX.Bitstream
+import Codec.PointCloud.Driver.EDX.Types
 import Codec.PointCloud.Utils
-import Codec.PointCloud.Driver.Bitstream
-import qualified Codec.PointCloud.Types.PCBitStream as P
+import Codec.PointCloud.Driver.PLY.Utils
 
 
 import Data.Matrix
 import Data.Maybe
 import qualified Data.Set as S
 import qualified Data.Matrix as M
-import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as B
 
 -- Encoder
 
@@ -55,16 +55,13 @@ applyMaskEncoder = elementwise f
 
 -- Decoder
 
-decodeGeometry :: B.ByteString -> Either String PointCloud
-decodeGeometry b = do
-    let resultDecodeParser = bitstreamPC b
-    case resultDecodeParser of
-        Nothing -> Left "Error reading .edx file!"
-        Just (P.PCBitStream padding axis size payload) -> do
-                                        let (root, rest) = extractData payload padding size
+decodeGeometry :: EDX -> Either String PointCloud
+decodeGeometry (EDX (EDXHeader _ axis _ bitSize _) payload) = do
+                                        let size = 2^ fromIntegral bitSize
+                                        let (root, rest) = extractData payload size
                                         let rootSilhoutte =  map (== 1) root
                                         let tfr = triForceTreeRange (0, size - 1)
-                                        let (pc, _, b) = triForceR2PC mempty tfr rootSilhoutte rest (P.Header axis size)
+                                        let (pc, _, b) = triForceR2PC mempty tfr rootSilhoutte rest (axis, size)
                                         Right pc
 
 buildRootSilhoutte :: Bin -> PointCloudSize -> ImageSparse
@@ -74,6 +71,5 @@ buildRootSilhoutte b s = rasterToSparse $ f <$> M.fromList s s b
 bString2Bin :: B.ByteString -> Bin
 bString2Bin b = concatMap integral2BitList $ B.unpack b
 
-extractData :: B.ByteString -> Padding -> PointCloudSize -> (Bin, Bin)
-extractData b p s = splitAt (s*s) $ take (length bin - fromIntegral p) bin
-    where bin = bString2Bin b
+extractData :: B.ByteString -> PointCloudSize -> (Bin, Bin)
+extractData b s = splitAt (s*s) (bString2Bin b)
