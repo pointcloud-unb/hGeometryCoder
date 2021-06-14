@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f1147a3d93f360c879b1b9267865a2d65b99b31a3eebf15b9f5c45edf21cb230
+-- hash: 85aa32c1511b9e43eb4ff73c9d27de671720f9cc0de31367b1af9b34ee59469d
 
 name:           hGeometryCoder
 version:        0.1.0.0
@@ -63,7 +63,7 @@ executable hGeometryCoder
       Paths_hGeometryCoder
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N -O2
+  ghc-options: -O2
   build-depends:
       attoparsec
     , base >=4.7 && <5

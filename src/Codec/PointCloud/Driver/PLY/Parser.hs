@@ -2,9 +2,8 @@
 
 module Codec.PointCloud.Driver.PLY.Parser (
   parsePLY1
-  , parsePLY'
   , elementData
-  , header  
+  , header
   ) where
 
 import Codec.PointCloud.Driver.PLY.Types
@@ -15,33 +14,26 @@ import Data.Attoparsec.ByteString.Char8 hiding (char)
 import Data.ByteString.Char8 (ByteString, pack, readFile, drop)
 import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
-import Data.Vector (Vector, fromList, replicateM)
-
+--import Data.Vector (Vector, fromList, replicateM)
 import qualified Data.Sequence as S ( (|>), empty, fromList, replicateM)
 
 import Data.Either
 
 import System.IO.Unsafe
 
-e = [Element {elName = "faces", elNum = 5, elProps = [ScalarProperty {sPropType = FloatT, sPropName = "x2"},ScalarProperty {sPropType = FloatT, sPropName = "y2"}]},Element {elName = "vertexCoisa", elNum = 10, elProps = [ScalarProperty {sPropType = FloatT, sPropName = "x"},ScalarProperty {sPropType = FloatT, sPropName = "y"},ScalarProperty {sPropType = FloatT, sPropName = "z"},ScalarProperty {sPropType = UcharT, sPropName = "red"},ScalarProperty {sPropType = UcharT, sPropName = "green"},ScalarProperty {sPropType = UcharT, sPropName = "blue"}]}]
-
-vertex = "vertex" :: ByteString
-
-file = unsafePerformIO $ Data.ByteString.Char8.readFile  "assets/simple.ply"
-fileData = Data.ByteString.Char8.drop 101 file
-
-pHeader = fromRight undefined $ parseOnly header file
-e1 = head $ hElems pHeader
-e1props = elProps e1
-
-
 
 parsePLY1 :: ByteString -> Either String PLY
 parsePLY1 = parseOnly (ply <* endOfInput) 
 
+-- parsePLYHeader1 :: ByteString -> Either String Header
+-- parsePLYHeader1 = parseOnly header
+
+-- PLY using Sequence for benchmarking --
 parsePLY' :: ByteString -> Either String PLY'
 parsePLY' = parseOnly (ply' <* endOfInput) 
 
+
+-- Top Level parsers --
 
 -- * Header parser
 -- | Parse the PLY header
@@ -53,29 +45,22 @@ header = Header <$> preamble <*> elements <* "end_header" <* endOfLine
 ply :: Parser PLY
 ply = do
   !parsedHeader <- header
-  let dataParser = join <$> forM (hElems parsedHeader) elementData
-  !dataBlocks <- dataParser
+  !dataBlocks <- join <$> forM (hElems parsedHeader) elementData
   return $! PLY parsedHeader dataBlocks
 
 ply' :: Parser PLY'
 ply' = do
   !parsedHeader <- header
-  let dataParser = join <$> forM (S.fromList $ hElems parsedHeader) elementData'
-  !dataBlocks <- dataParser
+  !dataBlocks <- join <$> forM (S.fromList $ hElems parsedHeader) elementData'
   return $! PLY' parsedHeader dataBlocks
 
 
+-- Low level parsers -- 
 
--- * ASCII parsers
--- | Parse a given element data.
--- elementData :: Element -> Parser (Vector (Vector Scalar))
--- elementData e = replicateM (elNum e)
---                   (skipComments *> (fromList <$> dataLine (elProps e)))
 elementData :: Element -> Parser [DataLine]
 {-# INLINE elementData #-}
 elementData e = count (elNum e)
                   (skipComments *> dataLine (elProps e))
-
 
 
 elementData' :: Element -> Parser DataBlocks'
@@ -117,16 +102,16 @@ scalarType = choice $
 -- * Data parser
 dataLine :: [Property] -> Parser DataLine
 {-# INLINE dataLine #-}
-dataLine = getData []
+dataLine ps = getData [] ps
   where
-    getData ds [] = pure (reverse ds)
-    getData ds (ScalarProperty t _:ps) = do !x <- scalar t
-                                            skipSpace
-                                            getData (x:ds) ps
-    getData _ (ListProperty th td _:_) = do !x <- scalar th
-                                            skipSpace
-                                            let c = scalarInt x
-                                            count c (scalar td <* skipSpace)
+    getData !ds [] = pure (reverse ds)
+    getData !ds (ScalarProperty t _:ps) = do
+      !x <- scalar t <* skipSpace
+      getData (x:ds) ps
+    getData !ds (ListProperty th td _:_) = do
+      !x <- scalar th <* skipSpace
+      let !c = scalarInt x
+      count c (scalar td <* skipSpace)
 
 
 -- * Data parser
@@ -134,42 +119,39 @@ dataLine' :: [Property] -> Parser DataLine'
 {-# INLINE dataLine' #-}
 dataLine' ps = getDataLine S.empty ps 
   where
-    getDataLine dl [] = return dl
-    getDataLine dl (ScalarProperty propT _:ps) = do
-      !x <- scalar propT
-      skipSpace
+    getDataLine !dl [] = return dl
+    getDataLine !dl (ScalarProperty propT _:ps) = do
+      !x <- scalar propT <* skipSpace
       getDataLine (dl S.|> x) ps
     -- The following considers that we don't get scalar properties after list properties.
-    getDataLine dl (ListProperty indexT propT _:_) = do
-      !x <- scalar indexT
-      skipSpace
-      let c = scalarInt x
-      --S.fromList <$> count c (scalar propT <* skipSpace)
+    getDataLine !dl (ListProperty indexT propT _:_) = do
+      !x <- scalar indexT <* skipSpace
+      let !c = scalarInt x
       S.replicateM c (scalar propT <* skipSpace)
 
 
 -- | Extract an Int from the Scalar types. Return 0 if float or double.
 scalarInt :: Scalar -> Int
 {-# INLINE scalarInt #-}
-scalarInt (CharS n)   = fromIntegral n
-scalarInt (UcharS n)  = fromIntegral n
-scalarInt (ShortS n)  = fromIntegral n
-scalarInt (UshortS n) = fromIntegral n
-scalarInt (IntS n)    = n
-scalarInt (UintS n)   = fromIntegral n
+scalarInt !(CharS n)   = fromIntegral n
+scalarInt !(UcharS n)  = fromIntegral n
+scalarInt !(ShortS n)  = fromIntegral n
+scalarInt !(UshortS n) = fromIntegral n
+scalarInt !(IntS n)    = n
+scalarInt !(UintS n)   = fromIntegral n
 scalarInt _ = 0
 
 -- * Scalar parser
 scalar :: ScalarType -> Parser Scalar
 {-# INLINE scalar #-}
-scalar CharT   = CharS   <$> char
-scalar UcharT  = UcharS  <$> uchar
-scalar ShortT  = ShortS  <$> int16
-scalar UshortT = UshortS <$> uint16
-scalar IntT    = IntS    <$> int
-scalar UintT   = UintS   <$> uint
-scalar FloatT  = FloatS  <$> float
-scalar DoubleT = DoubleS <$> double
+scalar !CharT   = CharS   <$> char
+scalar !UcharT  = UcharS  <$> uchar
+scalar !ShortT  = ShortS  <$> int16
+scalar !UshortT = UshortS <$> uint16
+scalar !IntT    = IntS    <$> int
+scalar !UintT   = UintS   <$> uint
+scalar !FloatT  = FloatS  <$> float
+scalar !DoubleT = DoubleS <$> double
 
 -- * Numeric parsers
 char :: Parser Int8

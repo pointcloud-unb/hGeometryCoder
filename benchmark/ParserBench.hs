@@ -29,12 +29,12 @@ main = do
     env myEnv $ \ ~(dustDense5, dustDense6, ricardo9, ricardo10) ->
         bgroup "ply/parser"
         [ bench "dustDense5.ply" $ nf parsePLY1 dustDense5
-        -- , bench "dustDense6.ply" $ nf parsePLY1  dustDense6
-        -- , bench "ricardo9.ply" $ nf parsePLY1 ricardo9
-        -- , bench "ricardo10.ply" $ nf parsePLY1 ricardo10
-        -- , bench "seq-dustDense5.ply" $ nf parsePLY' dustDense5
-        -- , bench "seq-dustDense6.ply" $ nf parsePLY' dustDense6
-        -- , bench "seq-ricardo9.ply" $ nf parsePLY' ricardo9
-        -- , bench "seq-ricardo10.ply" $ nf parsePLY' ricardo10
+        , bench "dustDense6.ply" $ nf parsePLY1  dustDense6
+        , bench "ricardo9.ply" $ nf parsePLY1 ricardo9
+        , bench "ricardo10.ply" $ nf parsePLY1 ricardo10
+        , bench "seq-dustDense5.ply" $ nf parsePLY' dustDense5
+        , bench "seq-dustDense6.ply" $ nf parsePLY' dustDense6
+        , bench "seq-ricardo9.ply" $ nf parsePLY' ricardo9
+        , bench "seq-ricardo10.ply" $ nf parsePLY' ricardo10
         ]
     ]

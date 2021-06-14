@@ -13,21 +13,22 @@ import qualified Data.Sequence as S
 --import Data.Vector
 
 
+-- PLY representation --
 data PLY = PLY { plyHeader :: !Header
                , plyData   :: !DataBlocks }
-  deriving (Show, Generic, NFData)
-
-data PLY' = PLY' { plyHeader' :: !Header
-                 , plyData'   :: !DataBlocks' }
   deriving (Show, Generic, NFData)
 
 type DataBlocks = [DataLine]
 type DataLine = [Scalar]
 
+-- PLY using Sequence -- 
+data PLY' = PLY' { plyHeader' :: !Header
+                 , plyData'   :: !DataBlocks' }
+  deriving (Show, Generic, NFData)
+
 type DataBlocks' = S.Seq DataLine'
 type DataLine' = S.Seq Scalar
 
---type DataLine = 
 
 data Header = Header { hFormat :: !Format
                      , hElems  :: ![Element] }
