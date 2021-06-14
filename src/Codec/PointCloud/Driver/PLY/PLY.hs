@@ -5,7 +5,6 @@ module Codec.PointCloud.Driver.PLY.PLY
     writePLY
   ) where
 
-
 import qualified Data.ByteString as B (ByteString)
 import Data.Attoparsec.ByteString.Char8
     ( parse, parseOnly, Result, IResult(Partial, Done, Fail) )
@@ -22,19 +21,28 @@ import Codec.PointCloud.Types.Voxel (Voxel(getU, getV, getW))
 import Data.Foldable (Foldable(toList))
 
 writePLY :: PointCloud -> PLY
-writePLY pc = PLY header (formatPLYData pc)
-  where header = Header
-                    ASCII
-                    [Element (B8.pack "vertex") (pcSize pc)
-                                 [ScalarProperty FloatT (B8.pack "x"),
-                                  ScalarProperty FloatT (B8.pack "y"),
-                                  ScalarProperty FloatT (B8.pack "z")]]
+writePLY pc = PLY header (writePLYData pc)
+  where
+    header =
+      Header
+        ASCII
+        [ Element
+            (B8.pack "vertex")
+            (pcSize pc)
+            [ ScalarProperty FloatT (B8.pack "x"),
+              ScalarProperty FloatT (B8.pack "y"),
+              ScalarProperty FloatT (B8.pack "z")
+            ]
+        ]
 
 writePLYData :: PointCloud -> DataBlocks
 writePLYData (PointCloud voxelList _) = fmap formatVoxel (toList voxelList)
-  where formatVoxel voxel = [FloatS ((fromIntegral $ getU voxel)::Float),
-                             FloatS ((fromIntegral $ getV voxel)::Float),
-                             FloatS ((fromIntegral $ getW voxel)::Float)]
+  where
+    formatVoxel voxel =
+      let u = FloatS ((fromIntegral $ getU voxel) :: Float)
+          v = FloatS ((fromIntegral $ getV voxel) :: Float)
+          w = FloatS ((fromIntegral $ getW voxel) :: Float)
+       in [u, v, w]
 
 
 
