@@ -2,7 +2,7 @@
 
 module Codec.PointCloud.Driver.PLY.PLY
   ( parsePLY,
-    formatPLY
+    writePLY
   ) where
 
 
@@ -21,8 +21,8 @@ import Codec.PointCloud.Types.PointCloud(PointCloud(PointCloud), pcSize)
 import Codec.PointCloud.Types.Voxel (Voxel(getU, getV, getW))
 import Data.Foldable (Foldable(toList))
 
-formatPLY :: PointCloud -> PLY
-formatPLY pc = PLY header (formatPLYData pc)
+writePLY :: PointCloud -> PLY
+writePLY pc = PLY header (formatPLYData pc)
   where header = Header
                     ASCII
                     [Element (B8.pack "vertex") (pcSize pc)
@@ -30,8 +30,8 @@ formatPLY pc = PLY header (formatPLYData pc)
                                   ScalarProperty FloatT (B8.pack "y"),
                                   ScalarProperty FloatT (B8.pack "z")]]
 
-formatPLYData :: PointCloud -> DataBlocks
-formatPLYData (PointCloud voxelList _) = fmap formatVoxel (toList voxelList)
+writePLYData :: PointCloud -> DataBlocks
+writePLYData (PointCloud voxelList _) = fmap formatVoxel (toList voxelList)
   where formatVoxel voxel = [FloatS ((fromIntegral $ getU voxel)::Float),
                              FloatS ((fromIntegral $ getV voxel)::Float),
                              FloatS ((fromIntegral $ getW voxel)::Float)]
