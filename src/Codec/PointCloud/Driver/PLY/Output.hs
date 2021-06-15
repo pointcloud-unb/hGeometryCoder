@@ -1,10 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Codec.PointCloud.Driver.PLY.Output (putPLY, writePLY) where
+module Codec.PointCloud.Driver.PLY.Output (
+  putPLY
+  , writePLY
+  , flatPLY
+  , writeFlatPLY
+  ) where
 
 import Codec.PointCloud.Driver.PLY.Types
+
+import Flat (flat, unflat)
 import Data.ByteString.Builder
-import qualified Data.ByteString.Lazy as B (ByteString, writeFile)
+import qualified Data.ByteString.Lazy as B (ByteString, writeFile, fromStrict)
 
 
 -- ply1 = PLY {plyHeader = Header {hFormat = ASCII, hElems = [Element {elName = "vertex", elNum = 12, elProps = [ScalarProperty {sPropType = FloatT, sPropName = "x"},ScalarProperty {sPropType = FloatT, sPropName = "y"},ScalarProperty {sPropType = FloatT, sPropName = "z"}]}]}, plyData = [[FloatS 1.0,FloatS 0.0,FloatS 2.0],[FloatS 1.0,FloatS 0.0,FloatS 3.0],[FloatS 1.0,FloatS 1.0,FloatS 2.0],[FloatS 1.0,FloatS 1.0,FloatS 3.0],[FloatS 2.0,FloatS 1.0,FloatS 1.0],[FloatS 2.0,FloatS 1.0,FloatS 2.0],[FloatS 2.0,FloatS 2.0,FloatS 1.0],[FloatS 2.0,FloatS 2.0,FloatS 2.0],[FloatS 3.0,FloatS 2.0,FloatS 0.0],[FloatS 3.0,FloatS 2.0,FloatS 1.0],[FloatS 3.0,FloatS 3.0,FloatS 0.0],[FloatS 3.0,FloatS 3.0,FloatS 1.0]]}
@@ -23,6 +30,15 @@ putPLY = toLazyByteString . ply
 writePLY :: FilePath -> PLY -> IO ()
 writePLY file = B.writeFile file . putPLY
 
+
+flatPLY :: PLY -> B.ByteString
+flatPLY = B.fromStrict . flat
+
+writeFlatPLY :: FilePath -> PLY -> IO ()
+writeFlatPLY file = B.writeFile file . flatPLY
+
+
+-- Internals -- 
 
 ply :: PLY -> Builder
 ply (PLY plyHeader plyData) =

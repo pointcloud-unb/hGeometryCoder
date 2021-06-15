@@ -2,36 +2,52 @@
 
 module Codec.PointCloud.Driver.PLY.Parser (
   parsePLY1
+  , readPLY
+  , unflatPLY
+  , readFlatPLY
   , elementData
   , header
   ) where
 
 import Codec.PointCloud.Driver.PLY.Types
 
+import Flat
 import Control.Applicative
 import Control.Monad (join, forM)
+import Data.Char (ord)
 import Data.Attoparsec.ByteString.Char8 hiding (char)
-import Data.ByteString.Char8 (ByteString, pack, readFile, drop)
+import qualified Data.ByteString.Char8 as B (ByteString, pack, readFile, drop) 
 import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
 --import Data.Vector (Vector, fromList, replicateM)
 import qualified Data.Sequence as S ( (|>), empty, fromList, replicateM)
 
-import Data.Either
-
-import System.IO.Unsafe
 
 
-parsePLY1 :: ByteString -> Either String PLY
+
+
+
+parsePLY1 :: B.ByteString -> Either String PLY
 parsePLY1 = parseOnly (ply <* endOfInput) 
 
--- parsePLYHeader1 :: ByteString -> Either String Header
+-- parsePLYHeader1 :: B.ByteString -> Either String Header
 -- parsePLYHeader1 = parseOnly header
 
 -- PLY using Sequence for benchmarking --
-parsePLY' :: ByteString -> Either String PLY'
+parsePLY' :: B.ByteString -> Either String PLY'
 parsePLY' = parseOnly (ply' <* endOfInput) 
 
+
+readPLY :: FilePath -> IO (Either String PLY)
+readPLY file = parsePLY1 <$> B.readFile file
+
+unflatPLY :: B.ByteString -> Decoded PLY
+unflatPLY = unflat
+
+readFlatPLY :: FilePath -> IO (Decoded PLY)
+readFlatPLY file = unflatPLY <$> B.readFile file
+
+-- Internals -- 
 
 -- Top Level parsers --
 
@@ -191,5 +207,10 @@ skipComments = skipSpace *> ("comment " *> takeLine *> skipComments) <|> pure ()
 skipElementData :: Element -> Parser ()
 skipElementData e = count (elNum e) (skipComments *> takeLine) *> pure ()
 
-takeLine :: Parser ByteString
-takeLine = pack <$> manyTill anyChar endOfLine
+takeLine :: Parser B.ByteString
+takeLine = takeTill $ isEndOfLine . c2w
+
+c2w :: Char -> Word8
+c2w = fromIntegral . ord
+{-# INLINE c2w #-}
+
