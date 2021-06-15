@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e2de8931d1f7635266fd58d99872f56ccad656c5714942c4986163bb54bcedbf
+-- hash: 19f645e0342569e5269997ac540c7c65929b3df3170929eac87ae19dcc326169
 
 name:           hGeometryCoder
 version:        0.1.0.0
@@ -28,9 +28,10 @@ source-repository head
 library
   exposed-modules:
       Codec.PointCloud.Compression.Dyadic
+      Codec.PointCloud.Compression.PLY
       Codec.PointCloud.Driver.EDX.Bitstream
       Codec.PointCloud.Driver.EDX.Types
-      Codec.PointCloud.Driver.PLY.Bitstream
+      Codec.PointCloud.Driver.PLY.Output
       Codec.PointCloud.Driver.PLY.Parser
       Codec.PointCloud.Driver.PLY.Types
       Codec.PointCloud.Driver.PLY.Utils

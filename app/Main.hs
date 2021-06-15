@@ -4,10 +4,9 @@ import CLI
 
 import Codec.PointCloud.Utils
 import Codec.PointCloud.Compression.Dyadic
-import Codec.PointCloud.Driver.PLY.PLY
-import Codec.PointCloud.Driver.PLY.Parser (parsePLY1)
-import Codec.PointCloud.Driver.Bitstream
-
+import Codec.PointCloud.Compression.PLY (pc2PLY)
+import Codec.PointCloud.Driver.PLY.Parser (parsePLY)
+import Codec.PointCloud.Driver.PLY.Output (writePLY)
 
 import Codec.PointCloud.Driver.EDX.Bitstream
 import qualified Data.ByteString as B (readFile, writeFile, pack)
@@ -36,32 +35,33 @@ main = do
     (Decode input) -> do
       putStrLn $ "Decoding " ++ input
       (Right edx) <- readEDX input
-      (Right pc) <- pure $ buildPLY =<< decodeGeometry edx
+      (Right ply) <- pure $ Right . pc2PLY =<< decodeGeometry edx
       let decompressedFileName = filePathFormat ".dec.ply" input
       putStrLn $ "Decoding completed! Writing " ++ decompressedFileName
-      B.writeFile decompressedFileName pc
+      --B.writeFile decompressedFileName pc
+      writePLY decompressedFileName ply
       exitSuccess
     (Parse input) -> do
       fileContents <- B.readFile input
-      parsed <- evaluate $ force $ parsePLY1 fileContents
+      parsed <- evaluate $ force $ parsePLY fileContents
       putStrLn $ "Parse finished"
     (Error mError) -> do
       putStrLn mError
       exitFailure
 
 
-mainDecoder = do
-  (Right edx) <- readEDX "assets/teste.edx"
-  (Right pc) <- pure $ buildPLY =<< decodeGeometry edx
-  B.writeFile "assets/testeR.ply" pc
-  return ()
+-- mainDecoder = do
+--   (Right edx) <- readEDX "assets/teste.edx"
+--   (Right pc) <- pure $ buildPLY =<< decodeGeometry edx
+--   B.writeFile "assets/testeR.ply" pc
+--   return ()
 
-mainEncoder = do
-  let file = "assets/simple.ply"
-  plyData <- B.readFile file
-  (Right x) <- pure $ parsePLY plyData
-  --return x
-  --return plyData
-  (Right edx) <- pure $ buildEDX =<< encodeGeometry X =<< parsePLY plyData
-  writeEDX "assets/teste.edx" edx
-  return ()
+-- mainEncoder = do
+--   let file = "assets/simple.ply"
+--   plyData <- B.readFile file
+--   (Right x) <- pure $ parsePLY plyData
+--   --return x
+--   --return plyData
+--   (Right edx) <- pure $ buildEDX =<< encodeGeometry X =<< parsePLY plyData
+--   writeEDX "assets/teste.edx" edx
+--   return ()

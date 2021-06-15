@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings, BangPatterns #-}
 
-module Codec.PointCloud.Driver.PLY.Parser (
-  parsePLY1
+module Codec.PointCloud.Driver.PLY.Parser
+  ( parsePLY
   , readPLY
   , unflatPLY
   , readFlatPLY
@@ -27,8 +27,8 @@ import qualified Data.Sequence as S ( (|>), empty, fromList, replicateM)
 
 
 
-parsePLY1 :: B.ByteString -> Either String PLY
-parsePLY1 = parseOnly (ply <* endOfInput) 
+parsePLY :: B.ByteString -> Either String PLY
+parsePLY = parseOnly (ply <* endOfInput) 
 
 -- parsePLYHeader1 :: B.ByteString -> Either String Header
 -- parsePLYHeader1 = parseOnly header
@@ -39,7 +39,7 @@ parsePLY' = parseOnly (ply' <* endOfInput)
 
 
 readPLY :: FilePath -> IO (Either String PLY)
-readPLY file = parsePLY1 <$> B.readFile file
+readPLY file = parsePLY <$> B.readFile file
 
 unflatPLY :: B.ByteString -> Decoded PLY
 unflatPLY = unflat
