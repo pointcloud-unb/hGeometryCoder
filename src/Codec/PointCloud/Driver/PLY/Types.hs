@@ -2,6 +2,7 @@
 
 module Codec.PointCloud.Driver.PLY.Types where
 
+import Flat
 import GHC.Generics (Generic)
 import Control.DeepSeq
 
@@ -16,7 +17,7 @@ import qualified Data.Sequence as S
 -- PLY representation --
 data PLY = PLY { plyHeader :: !Header
                , plyData   :: !DataBlocks }
-  deriving (Show, Generic, NFData)
+  deriving (Show, Generic, Flat, NFData)
 
 type DataBlocks = [DataLine]
 type DataLine = [Scalar]
@@ -32,24 +33,24 @@ type DataLine' = S.Seq Scalar
 
 data Header = Header { hFormat :: !Format
                      , hElems  :: ![Element] }
-  deriving (Show, Generic, NFData)
+  deriving (Show, Generic, Flat, NFData)
 
 data Format = ASCII      -- ^ ASCII
             | BinaryLE   -- ^ Binary Little Endian
             | BinaryBE   -- ^ Binary Big Endian
-            deriving (Show, Generic, NFData)
+            deriving (Show, Generic, Flat, NFData)
 
 data Element = Element { elName  :: !ByteString
                        , elNum   :: !Int
                        , elProps :: ![Property] }
-             deriving (Show, Generic, NFData)
+             deriving (Show, Generic, Flat, NFData)
 
 data Property = ScalarProperty { sPropType :: !ScalarType
                                , sPropName :: !ByteString }
               | ListProperty { lPropIndexType :: !ScalarType
                              , lPropType      :: !ScalarType
                              , lPropName      :: !ByteString }
-              deriving(Show, Generic, NFData)
+              deriving(Show, Generic, Flat, NFData)
 
 data ScalarType = CharT
                 | UcharT
@@ -59,7 +60,7 @@ data ScalarType = CharT
                 | UintT
                 | FloatT
                 | DoubleT
-                deriving (Eq, Show, Generic, NFData)
+                deriving (Eq, Show, Generic, Flat, NFData)
 
 data Scalar = CharS   !Int8
             | UcharS  !Word8
@@ -69,4 +70,4 @@ data Scalar = CharS   !Int8
             | UintS   !Word32
             | FloatS  !Float
             | DoubleS !Double
-            deriving (Show, Generic, NFData)
+            deriving (Show, Generic, Flat, NFData)
