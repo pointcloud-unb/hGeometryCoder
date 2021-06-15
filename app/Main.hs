@@ -50,18 +50,18 @@ main = do
       exitFailure
 
 
--- mainDecoder = do
---   (Right edx) <- readEDX "assets/teste.edx"
---   (Right pc) <- pure $ buildPLY =<< decodeGeometry edx
---   B.writeFile "assets/testeR.ply" pc
---   return ()
+mainDecoder = do
+  (Right edx) <- readEDX "assets/simple.edx"
+  (Right ply) <- pure $ Right . pc2PLY =<< decodeGeometry edx
+  return (ply)
 
--- mainEncoder = do
---   let file = "assets/simple.ply"
---   plyData <- B.readFile file
---   (Right x) <- pure $ parsePLY plyData
---   --return x
---   --return plyData
---   (Right edx) <- pure $ buildEDX =<< encodeGeometry X =<< parsePLY plyData
---   writeEDX "assets/teste.edx" edx
---   return ()
+mainEncoder = do
+  let file = "assets/simple.ply"
+  plyData <- B.readFile file
+  (Right x) <- pure $ encodeGeometry X =<< parsePLY plyData 
+  return x
+  --return plyData
+
+  -- (Right edx) <- pure $ buildEDX =<< encodeGeometry X =<< parsePLY plyData
+  -- writeEDX "assets/teste.edx" edx
+  -- return ()

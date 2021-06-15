@@ -15,7 +15,7 @@ import Codec.PointCloud.Driver.PLY.Types
      PLY(PLY), DataBlocks, Format (ASCII), Property(ScalarProperty),
       ScalarType(FloatT), Scalar (FloatS))
 import Control.Monad (forM, join)
-import Codec.PointCloud.Types.PointCloud(PointCloud(PointCloud), pcSize)
+import Codec.PointCloud.Types.PointCloud(PointCloud(PointCloud), getVoxelsLength)
 import Codec.PointCloud.Types.Voxel (Voxel(getU, getV, getW))
 import Data.Foldable (Foldable(toList))
 
@@ -27,7 +27,7 @@ pc2PLY pc = PLY header (writePLYData pc)
         ASCII
         [ Element
             (B8.pack "vertex")
-            (pcSize pc)
+            (getVoxelsLength pc)
             [ ScalarProperty FloatT (B8.pack "x"),
               ScalarProperty FloatT (B8.pack "y"),
               ScalarProperty FloatT (B8.pack "z")

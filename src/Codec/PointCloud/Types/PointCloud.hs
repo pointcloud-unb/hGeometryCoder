@@ -55,6 +55,9 @@ removeVoxel (PointCloud set size) voxel = PointCloud (S.delete voxel set) size
 getPointCloud :: Axis -> PLY -> Either String PointCloud
 getPointCloud axis ply = getCoordinatesIndexes (plyHeader ply) >>= extractVoxels axis (plyData ply)
 
+getVoxelsLength :: PointCloud -> Int
+getVoxelsLength (PointCloud voxelSet _) = S.size voxelSet
+
 extractVoxels :: Axis -> [DataLine] -> (Coordinate, Coordinate, Coordinate) -> Either String PointCloud
 extractVoxels axis dss (u,v,w) =
   (\x -> PointCloud (S.fromList x) (side x)) <$> sequence (createVoxel <$> dss)
