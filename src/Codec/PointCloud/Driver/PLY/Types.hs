@@ -8,6 +8,7 @@ import Control.DeepSeq
 import Data.ByteString (ByteString)
 import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
+import qualified Data.Sequence as S
 
 --import Data.Vector
 
@@ -18,6 +19,9 @@ data PLY = PLY { plyHeader :: Header
 
 type DataBlocks = [DataLine]
 type DataLine = [Scalar]
+
+type DataBlocks' = S.Seq DataLine'
+type DataLine' = S.Seq Scalar
 
 --type DataLine = 
 

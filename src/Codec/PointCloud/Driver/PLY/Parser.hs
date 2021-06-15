@@ -2,28 +2,32 @@
 
 module Codec.PointCloud.Driver.PLY.Parser where
 
+import Codec.PointCloud.Driver.PLY.Types
+
 import Control.Applicative
 import Control.Monad (join, forM)
 import Data.Attoparsec.ByteString.Char8 hiding (char)
-import Data.ByteString.Char8 (ByteString, pack)
+import Data.ByteString.Char8 (ByteString, pack, readFile, drop)
 import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
 import Data.Vector (Vector, fromList, replicateM)
 
-import Codec.PointCloud.Driver.PLY.Types
+import qualified Data.Sequence as S ( (|>), empty, fromList, replicateM)
+
+import Data.Either
+
+import System.IO.Unsafe
 
 e = [Element {elName = "faces", elNum = 5, elProps = [ScalarProperty {sPropType = FloatT, sPropName = "x2"},ScalarProperty {sPropType = FloatT, sPropName = "y2"}]},Element {elName = "vertexCoisa", elNum = 10, elProps = [ScalarProperty {sPropType = FloatT, sPropName = "x"},ScalarProperty {sPropType = FloatT, sPropName = "y"},ScalarProperty {sPropType = FloatT, sPropName = "z"},ScalarProperty {sPropType = UcharT, sPropName = "red"},ScalarProperty {sPropType = UcharT, sPropName = "green"},ScalarProperty {sPropType = UcharT, sPropName = "blue"}]}]
 
 vertex = "vertex" :: ByteString
 
--- * ASCII parsers
--- | Parse a given element data.
--- elementData :: Element -> Parser (Vector (Vector Scalar))
--- elementData e = replicateM (elNum e)
---                   (skipComments *> (fromList <$> dataLine (elProps e)))
-elementData :: Element -> Parser [DataLine]
-elementData e = count (elNum e)
-                  (skipComments *> dataLine (elProps e))
+file = unsafePerformIO $ Data.ByteString.Char8.readFile  "assets/simple.ply"
+fileData = Data.ByteString.Char8.drop 101 file
+
+pHeader = fromRight undefined $ parseOnly header file
+e1 = head $ hElems pHeader
+e1props = elProps e1
 
 -- * Header parser
 -- | Parse the PLY header
@@ -38,6 +42,21 @@ ply = do
   let dataParser = join <$> forM (hElems parsedHeader) elementData
   dataBlocks <- dataParser
   return $ PLY parsedHeader dataBlocks
+
+
+
+-- * ASCII parsers
+-- | Parse a given element data.
+-- elementData :: Element -> Parser (Vector (Vector Scalar))
+-- elementData e = replicateM (elNum e)
+--                   (skipComments *> (fromList <$> dataLine (elProps e)))
+elementData :: Element -> Parser [DataLine]
+elementData e = count (elNum e)
+                  (skipComments *> dataLine (elProps e))
+
+elementData' :: Element -> Parser DataBlocks'
+elementData' e = S.replicateM (elNum e) (skipComments *> dataLine' (elProps e))
+
 
 format :: Parser Format
 format = "format" *> skipSpace *> (ascii <|> binaryLE <|> binaryBE)
@@ -71,7 +90,7 @@ scalarType = choice $
              , DoubleT <$ ("double " <|> "float64 ") ]
 
 -- * Data parser
-dataLine :: [Property] -> Parser [Scalar]
+dataLine :: [Property] -> Parser DataLine
 dataLine = getData []
   where
     getData ds [] = pure (reverse ds)
@@ -82,6 +101,24 @@ dataLine = getData []
                                             skipSpace
                                             let c = scalarInt x
                                             count c (scalar td <* skipSpace)
+
+
+-- * Data parser
+dataLine' :: [Property] -> Parser DataLine'
+dataLine' ps = getDataLine S.empty ps 
+  where
+    getDataLine dl [] = return dl
+    getDataLine dl (ScalarProperty propT _:ps) = do
+      x <- scalar propT
+      skipSpace
+      getDataLine (dl S.|> x) ps
+    -- The following considers that we don't get scalar properties after list properties.
+    getDataLine dl (ListProperty indexT propT _:_) = do
+      x <- scalar indexT
+      skipSpace
+      let c = scalarInt x
+      S.fromList <$> count c (scalar propT <* skipSpace)
+
 
 -- | Extract an Int from the Scalar types. Return 0 if float or double.
 scalarInt :: Scalar -> Int
