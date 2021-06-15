@@ -17,6 +17,10 @@ data PLY = PLY { plyHeader :: Header
                , plyData   :: DataBlocks }
   deriving (Show, Generic, NFData)
 
+data PLY' = PLY' { plyHeader' :: Header
+                 , plyData'   :: DataBlocks' }
+  deriving (Show, Generic, NFData)
+
 type DataBlocks = [DataLine]
 type DataLine = [Scalar]
 

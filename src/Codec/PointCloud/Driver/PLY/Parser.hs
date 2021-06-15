@@ -43,6 +43,13 @@ ply = do
   dataBlocks <- dataParser
   return $ PLY parsedHeader dataBlocks
 
+ply' :: Parser PLY'
+ply' = do
+  parsedHeader <- header
+  let dataParser = join <$> forM (S.fromList $ hElems parsedHeader) elementData'
+  dataBlocks <- dataParser
+  return $ PLY' parsedHeader dataBlocks
+
 
 
 -- * ASCII parsers
