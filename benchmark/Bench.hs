@@ -23,8 +23,8 @@ import qualified Data.ByteString as B (readFile)
 myConfig = defaultConfig {
   -- Output HTML file
   reportFile = Just "benchmark/results/report.html"
-  -- Each benchmark may run for at most 2 minutes.
-  , timeLimit = 120
+  -- Each benchmark may run for at most 1 minute.
+  , timeLimit = 60
   }
 
 plyLoadEnv = do
