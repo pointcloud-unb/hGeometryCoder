@@ -1,8 +1,14 @@
+{-# LANGUAGE DeriveGeneric, DeriveAnyClass#-}
 
 module Codec.PointCloud.Types.Voxel where
 
 import Codec.PointCloud.Utils
 import qualified Data.ByteString as B
+
+import Flat
+import GHC.Generics (Generic)
+import Control.DeepSeq
+
 
 --class (Eq a, Ord a) => Voxel a where
 --  unpack :: Voxel a -> (Coordinate, Coordinate, Coordinate)
@@ -13,7 +19,7 @@ import qualified Data.ByteString as B
 data Voxel = Voxel { getU :: Coordinate
                    , getV :: Coordinate
                    , getW :: Coordinate }
-  deriving(Show)
+  deriving (Show, Generic, Flat, NFData)
 
 
 instance Eq Voxel where

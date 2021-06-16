@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 19f645e0342569e5269997ac540c7c65929b3df3170929eac87ae19dcc326169
+-- hash: 19ad9864482388ad04fa50109e54dffa5c332ee39f33e4ba8ff18b41ab0c8049
 
 name:           hGeometryCoder
 version:        0.1.0.0
@@ -101,7 +101,7 @@ test-suite hGeometryCoder-test
 
 benchmark parser-bench
   type: exitcode-stdio-1.0
-  main-is: ParserBench.hs
+  main-is: Bench.hs
   other-modules:
       Paths_hGeometryCoder
   hs-source-dirs:

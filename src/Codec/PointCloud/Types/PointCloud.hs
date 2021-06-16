@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric, DeriveAnyClass#-}
 
 module Codec.PointCloud.Types.PointCloud where
 
@@ -12,6 +13,10 @@ import qualified Data.Set as S
 import Data.List
 import Data.Matrix
 import Data.Maybe
+
+import Flat
+import GHC.Generics (Generic)
+import Control.DeepSeq
 
 
 --class Cloud where
@@ -33,7 +38,7 @@ import Data.Maybe
 -- Point Cloud type
 data PointCloud = PointCloud { pcVoxels :: S.Set Voxel
                              , pcSize   :: Int}
-  deriving (Show)
+  deriving (Show, Generic, Flat, NFData)
 
 instance Semigroup PointCloud where
   (PointCloud ps1 l1) <> (PointCloud ps2 l2) = PointCloud (ps1 `S.union` ps2) (max l1 l2)

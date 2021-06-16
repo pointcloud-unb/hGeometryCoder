@@ -2,6 +2,7 @@
 
 module Codec.PointCloud.Driver.PLY.Parser
   ( parsePLY
+  , parsePLY'
   , readPLY
   , unflatPLY
   , readFlatPLY
@@ -21,8 +22,6 @@ import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
 --import Data.Vector (Vector, fromList, replicateM)
 import qualified Data.Sequence as S ( (|>), empty, fromList, replicateM)
-
-
 
 
 

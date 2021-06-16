@@ -58,7 +58,7 @@ tests:
 
 benchmarks:
   parser-bench:
-    main: ParserBench.hs
+    main: Bench.hs
     source-dirs: benchmark
     ghc-options:
       - -O2
@@ -68,3 +68,4 @@ benchmarks:
     dependencies:
       - hGeometryCoder
       - criterion
+
