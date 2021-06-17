@@ -24,3 +24,27 @@ Where:
   
 - input_file_path: input file for the chosen option
 - axis: axis throughout the encoding will be made 
+
+
+## Benchmarks
+There are benchmarks for several parts of the codec pipeline. They are intended to help optimize specific parts of the code base, but can also be used as reference to compare with other implementations.
+
+Results are displayed in the terminal. An HTML file is created in the folder `benchmark/results/` with a nicer summary. 
+
+- To run everything (go grab some coffee, this will probably take quite a long time to finish):
+
+`$ stack bench`
+
+- To list the available benchmarks:
+
+`$ stack bench --ba "--list`
+
+- To run specific benchmarks:
+
+`$ stack bench --ba "<benchmark name>"`
+
+in which `<banchmark name>` may be the total name or the prefix for a set of benchmarks.
+
+- Each benchmark runs for 1 minute, but some benefit from a longer timeout. To set it:
+
+`$ stack bench --ba "<benchmark name> --time-limit <seconds>" `
