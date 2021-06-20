@@ -5,6 +5,10 @@ module Main where
 import Codec.PointCloud.Driver.PLY.Types
 import Codec.PointCloud.Driver.PLY.Parser (parsePLY, readPLY, readFlatPLY, unflatPLY)
 import Codec.PointCloud.Driver.PLY.Output (writePLY, putPLY, flatPLY, writeFlatPLY)
+
+import Codec.PointCloud.Types.PointCloud
+import Codec.PointCloud.Utils
+
 import Data.Either
 import Control.Monad
 import Control.Applicative
@@ -55,6 +59,8 @@ main = do
                         , flatPLYBench
                         , writeFlatPLYBench
                         ]
+      , bgroup "Convert" [ getPointCloudBench
+                         ]
       ]
     ]
 
@@ -185,4 +191,14 @@ writeFlatPLYBench =
     , bench "ricardo10.ply"  $ nfAppIO (benchFunction "benchmark/results/ricardo10.ply") ricardo10
     ]
 
-
+-- PLY -> PointCloud --
+getPointCloudBench =
+  let benchFunction = getPointCloud X
+  in
+    env plyLoadParseEnv $ \ ~(dustDense5, dustDense6, ricardo9, ricardo10) ->
+    bgroup "getPointCloud"
+    [ bench "dustDense5.ply" $ nf benchFunction dustDense5
+--    , bench "dustDense6.ply" $ nf benchFunction dustDense6
+--    , bench "ricardo9.ply"   $ nf benchFunction ricardo9
+    , bench "ricardo10.ply"  $ nf benchFunction ricardo10
+    ]
