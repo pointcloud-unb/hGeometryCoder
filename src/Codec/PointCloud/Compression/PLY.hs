@@ -26,11 +26,11 @@ pc2PLY pc = PLY header (writePLYData pc)
       Header
         ASCII
         [ Element
-            (B8.pack "vertex")
+            "vertex"
             (getVoxelsLength pc)
-            [ ScalarProperty FloatT (B8.pack "x"),
-              ScalarProperty FloatT (B8.pack "y"),
-              ScalarProperty FloatT (B8.pack "z")
+            [ ScalarProperty FloatT "x"
+            , ScalarProperty FloatT "y"
+            , ScalarProperty FloatT "z"
             ]
         ]
 
