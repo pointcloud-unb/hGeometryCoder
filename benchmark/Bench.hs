@@ -7,6 +7,7 @@ import Codec.PointCloud.Driver.PLY.Parser (parsePLY, readPLY, readFlatPLY, unfla
 import Codec.PointCloud.Driver.PLY.Output (writePLY, putPLY, flatPLY, writeFlatPLY)
 
 import Codec.PointCloud.Types.PointCloud
+import Codec.PointCloud.Compression.PLY (pc2PLY)
 import Codec.PointCloud.Utils
 
 import Data.Either
@@ -60,6 +61,7 @@ main = do
                         , writeFlatPLYBench
                         ]
       , bgroup "Convert" [ getPointCloudBench
+                         , pc2PLYBench
                          ]
       ]
     ]
@@ -202,3 +204,24 @@ getPointCloudBench =
 --    , bench "ricardo9.ply"   $ nf benchFunction ricardo9
     , bench "ricardo10.ply"  $ nf benchFunction ricardo10
     ]
+
+-- PointCloud -> PLY -- 
+pcLoadParseEnv = do
+  let process file = fromRight mempty . getPointCloud X . fromRight emptyPLY . parsePLY <$> B.readFile file
+  dustDense5 <- process "assets/dustDense5.ply"
+  dustDense6 <- process "assets/dustDense6.ply"
+  ricardo9 <- process "assets/ricardo9.ply"
+  ricardo10 <- process "assets/ricardo10.ply"
+  return (dustDense5, dustDense6, ricardo9, ricardo10)
+
+pc2PLYBench =
+  let benchFunction = pc2PLY
+  in
+    env pcLoadParseEnv $ \ ~(dustDense5, dustDense6, ricardo9, ricardo10) ->
+    bgroup "pc2PLY"
+    [ bench "dustDense5.ply" $ nf benchFunction dustDense5
+--    , bench "dustDense6.ply" $ nf benchFunction dustDense6
+--    , bench "ricardo9.ply"   $ nf benchFunction ricardo9
+    , bench "ricardo10.ply"  $ nf benchFunction ricardo10
+    ]
+
