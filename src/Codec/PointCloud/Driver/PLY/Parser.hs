@@ -3,6 +3,7 @@
 module Codec.PointCloud.Driver.PLY.Parser
   ( parsePLY
   , parsePLY'
+  , parsePLYV
   , readPLY
   , unflatPLY
   , readFlatPLY
@@ -14,15 +15,16 @@ import Codec.PointCloud.Driver.PLY.Types
 
 import Flat
 import Control.Applicative
-import Control.Monad (join, forM)
+import Control.Monad (join, forM, replicateM)
 import Data.Char (ord)
 import Data.Attoparsec.ByteString.Char8 hiding (char)
 import qualified Data.ByteString.Char8 as B (ByteString, pack, readFile, drop) 
 import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
---import Data.Vector (Vector, fromList, replicateM)
 import qualified Data.Sequence as S ( (|>), empty, fromList, replicateM)
+import Data.Foldable
 
+import qualified Data.Vector as V
 
 
 
@@ -35,6 +37,12 @@ parsePLY = parseOnly (ply <* endOfInput)
 -- PLY using Sequence for benchmarking --
 parsePLY' :: B.ByteString -> Either String PLY'
 parsePLY' = parseOnly (ply' <* endOfInput) 
+
+
+-- PLY using Vector for benchmarking --
+parsePLYV :: B.ByteString -> Either String PLYV
+parsePLYV = parseOnly (plyV <* endOfInput) 
+
 
 
 readPLY :: FilePath -> IO (Either String PLY)
@@ -69,6 +77,13 @@ ply' = do
   !dataBlocks <- join <$> forM (S.fromList $ hElems parsedHeader) elementData'
   return $! PLY' parsedHeader dataBlocks
 
+plyV :: Parser PLYV
+plyV = do
+  !parsedHeader <- header
+  !dataBlocks <- join <$> forM (V.fromList $ hElems parsedHeader) elementDataV
+  return $! PLYV parsedHeader dataBlocks
+
+
 
 -- Low level parsers -- 
 
@@ -81,6 +96,11 @@ elementData e = count (elNum e)
 elementData' :: Element -> Parser DataBlocks'
 {-# INLINE elementData' #-}
 elementData' e = S.replicateM (elNum e) (skipComments *> dataLine' (elProps e))
+
+elementDataV :: Element -> Parser DataBlocksV
+{-# INLINE elementDataV #-}
+elementDataV e = V.replicateM (elNum e) (skipComments *> dataLineV (elProps e))
+
 
 
 format :: Parser Format
@@ -145,6 +165,22 @@ dataLine' ps = getDataLine S.empty ps
       !x <- scalar indexT <* skipSpace
       let !c = scalarInt x
       S.replicateM c (scalar propT <* skipSpace)
+
+dataLineV :: [Property] -> Parser DataLineV
+{-# INLINE dataLineV #-}
+dataLineV ps = V.concat <$> traverse propertyDataV ps
+
+
+propertyDataV :: Property -> Parser (V.Vector Scalar)
+{-# INLINE propertyDataV #-}
+propertyDataV (ScalarProperty propType _) = do
+  !x <- scalar propType <* skipSpace
+  return $ V.singleton x
+propertyDataV (ListProperty indexType propType _) = do
+  !x <- scalar indexType <* skipSpace
+  let !c = scalarInt x
+  V.replicateM c (scalar propType <* skipSpace)
+  
 
 
 -- | Extract an Int from the Scalar types. Return 0 if float or double.

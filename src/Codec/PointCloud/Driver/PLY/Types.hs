@@ -9,9 +9,10 @@ import Control.DeepSeq
 import Data.ByteString (ByteString)
 import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
-import qualified Data.Sequence as S
 
---import Data.Vector
+import qualified Data.Sequence as S
+import qualified Data.Vector as V
+
 
 
 -- PLY representation --
@@ -29,6 +30,15 @@ data PLY' = PLY' { plyHeader' :: !Header
 
 type DataBlocks' = S.Seq DataLine'
 type DataLine' = S.Seq Scalar
+
+-- PLY using Vector -- 
+data PLYV = PLYV { plyHeaderV :: !Header
+                 , plyDataV   :: DataBlocksV }
+  deriving (Show, Generic, NFData)
+
+type DataBlocksV = V.Vector DataLineV
+type DataLineV = V.Vector Scalar
+
 
 
 data Header = Header { hFormat :: !Format
