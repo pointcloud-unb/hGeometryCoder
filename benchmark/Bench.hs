@@ -3,7 +3,7 @@
 module Main where
 
 import Codec.PointCloud.Driver.PLY.Types
-import Codec.PointCloud.Driver.PLY.Parser (parsePLY, readPLY, readFlatPLY, unflatPLY)
+import Codec.PointCloud.Driver.PLY.Parser (parsePLY, parsePLY', parsePLYV, readPLY, readFlatPLY, unflatPLY)
 import Codec.PointCloud.Driver.PLY.Output (writePLY, putPLY, flatPLY, writeFlatPLY)
 
 import Codec.PointCloud.Types.PointCloud
@@ -51,6 +51,8 @@ main = do
   defaultMainWith myConfig [
     bgroup "PLY" [
       bgroup "Input" [ parsePLYBench
+                     , parsePLY'Bench
+                     , parsePLYVBench
                      , readPLYBench
                      , unflatPLYBench
                      , readFlatPLYBench
@@ -83,6 +85,23 @@ parsePLYBench = env plyLoadEnv $ \ ~(dustDense5, dustDense6, ricardo9, ricardo10
 --  , bench "ricardo9.ply"   $ nf parsePLY ricardo9
   , bench "ricardo10.ply"  $ nf parsePLY ricardo10
   ]
+
+parsePLY'Bench = env plyLoadEnv $ \ ~(dustDense5, dustDense6, ricardo9, ricardo10) ->
+  bgroup "parsePLY'"
+  [ bench "dustDense5.ply" $ nf parsePLY' dustDense5
+--  , bench "dustDense6.ply" $ nf parsePLY dustDense6
+--  , bench "ricardo9.ply"   $ nf parsePLY ricardo9
+  , bench "ricardo10.ply"  $ nf parsePLY' ricardo10
+  ]
+
+parsePLYVBench = env plyLoadEnv $ \ ~(dustDense5, dustDense6, ricardo9, ricardo10) ->
+  bgroup "parsePLYV"
+  [ bench "dustDense5.ply" $ nf parsePLYV dustDense5
+--  , bench "dustDense6.ply" $ nf parsePLY dustDense6
+--  , bench "ricardo9.ply"   $ nf parsePLY ricardo9
+  , bench "ricardo10.ply"  $ nf parsePLYV ricardo10
+  ]
+
 
 readPLYBench = 
   bgroup "readPLY"
