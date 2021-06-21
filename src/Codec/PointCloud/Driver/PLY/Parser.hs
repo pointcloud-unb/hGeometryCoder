@@ -21,9 +21,9 @@ import Data.Attoparsec.ByteString.Char8 hiding (char)
 import qualified Data.ByteString.Char8 as B (ByteString, pack, readFile, drop) 
 import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
-import qualified Data.Sequence as S ( (|>), empty, fromList, replicateM)
 import Data.Foldable
 
+import qualified Data.Sequence as S
 import qualified Data.Vector as V
 
 
@@ -154,17 +154,20 @@ propertyData (ListProperty indexType propType _) = do
 
 dataLine' :: [Property] -> Parser DataLine'
 {-# INLINE dataLine' #-}
-dataLine' ps = getDataLine S.empty ps 
-  where
-    getDataLine !dl [] = return dl
-    getDataLine !dl (ScalarProperty propT _:ps) = do
-      !x <- scalar propT <* skipSpace
-      getDataLine (dl S.|> x) ps
-    -- The following considers that we don't get scalar properties after list properties.
-    getDataLine !dl (ListProperty indexT propT _:_) = do
-      !x <- scalar indexT <* skipSpace
-      let !c = scalarInt x
-      S.replicateM c (scalar propT <* skipSpace)
+dataLine' ps = fold <$> traverse propertyData' ps
+
+
+propertyData' :: Property -> Parser (S.Seq Scalar)
+{-# INLINE propertyData' #-}
+propertyData' (ScalarProperty propType _) = do
+  !x <- scalar propType <* skipSpace
+  return $ S.singleton x
+propertyData' (ListProperty indexType propType _) = do
+  !x <- scalar indexType <* skipSpace
+  let !c = scalarInt x
+  S.replicateM c (scalar propType <* skipSpace)
+
+
 
 dataLineV :: [Property] -> Parser DataLineV
 {-# INLINE dataLineV #-}
