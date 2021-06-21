@@ -16,7 +16,7 @@ import qualified Data.Sequence as S
 
 -- PLY representation --
 data PLY = PLY { plyHeader :: !Header
-               , plyData   :: !DataBlocks }
+               , plyData   :: DataBlocks }
   deriving (Show, Generic, Flat, NFData)
 
 type DataBlocks = [DataLine]
@@ -24,7 +24,7 @@ type DataLine = [Scalar]
 
 -- PLY using Sequence -- 
 data PLY' = PLY' { plyHeader' :: !Header
-                 , plyData'   :: !DataBlocks' }
+                 , plyData'   :: DataBlocks' }
   deriving (Show, Generic, NFData)
 
 type DataBlocks' = S.Seq DataLine'
