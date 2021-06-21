@@ -114,22 +114,24 @@ scalarType = choice $
              , FloatT  <$ ("float "  <|> "float32 ")
              , DoubleT <$ ("double " <|> "float64 ") ]
 
--- * Data parser
+
+
 dataLine :: [Property] -> Parser DataLine
 {-# INLINE dataLine #-}
-dataLine ps = getData [] ps
-  where
-    getData !ds [] = pure (reverse ds)
-    getData !ds (ScalarProperty t _:ps) = do
-      !x <- scalar t <* skipSpace
-      getData (x:ds) ps
-    getData !ds (ListProperty th td _:_) = do
-      !x <- scalar th <* skipSpace
-      let !c = scalarInt x
-      count c (scalar td <* skipSpace)
+dataLine ps = concat <$> traverse propertyData ps
 
 
--- * Data parser
+propertyData :: Property -> Parser [Scalar]
+{-# INLINE propertyData #-}
+propertyData (ScalarProperty propType _) = do
+  !x <- scalar propType <* skipSpace
+  return [x]
+propertyData (ListProperty indexType propType _) = do
+  !x <- scalar indexType <* skipSpace
+  let !c = scalarInt x
+  replicateM c (scalar propType <* skipSpace)
+
+
 dataLine' :: [Property] -> Parser DataLine'
 {-# INLINE dataLine' #-}
 dataLine' ps = getDataLine S.empty ps 
