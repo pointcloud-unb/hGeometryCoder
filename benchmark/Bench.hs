@@ -3,7 +3,7 @@
 module Main where
 
 import Codec.PointCloud.Driver.PLY.Types
-import Codec.PointCloud.Driver.PLY.Parser (parsePLY, parsePLY', parsePLYV, readPLY, readFlatPLY, unflatPLY)
+import Codec.PointCloud.Driver.PLY.Parser (parsePLY, parsePLY', parsePLYV, parseVertexPLY, readPLY, readFlatPLY, unflatPLY)
 import Codec.PointCloud.Driver.PLY.Output (writePLY, putPLY, flatPLY, writeFlatPLY)
 
 import Codec.PointCloud.Types.PointCloud
@@ -53,6 +53,7 @@ main = do
       bgroup "Input" [ parsePLYBench
                      , parsePLY'Bench
                      , parsePLYVBench
+                     , parseVertexPLYBench
                      , readPLYBench
                      , unflatPLYBench
                      , readFlatPLYBench
@@ -85,6 +86,16 @@ parsePLYBench = env plyLoadEnv $ \ ~(dustDense5, dustDense6, ricardo9, ricardo10
 --  , bench "ricardo9.ply"   $ nf parsePLY ricardo9
   , bench "ricardo10.ply"  $ nf parsePLY ricardo10
   ]
+
+parseVertexPLYBench = env plyLoadEnv $ \ ~(dustDense5, dustDense6, ricardo9, ricardo10) ->
+  let benchFunction = parseVertexPLY
+  in bgroup "parseVertexPLY"
+     [ bench "dustDense5.ply" $ nf benchFunction dustDense5
+--   , bench "dustDense6.ply" $ nf benchFunction dustDense6
+--   , bench "ricardo9.ply"   $ nf benchFunction ricardo9
+     , bench "ricardo10.ply"  $ nf benchFunction ricardo10
+     ]
+
 
 parsePLY'Bench = env plyLoadEnv $ \ ~(dustDense5, dustDense6, ricardo9, ricardo10) ->
   bgroup "parsePLY'"
@@ -214,7 +225,10 @@ writeFlatPLYBench =
 
 -- PLY -> PointCloud --
 getPointCloudBench =
-  let benchFunction = getPointCloud X
+  -- Dyadic.hs -> buildTriForce
+  -- filterFromLabel "vertex" ply -> getPoinCloud X
+  -- getPoinCloud X . fromRight emptyPLY . filterFromLabel "vertex"
+  let benchFunction = getPointCloud X 
   in
     env plyLoadParseEnv $ \ ~(dustDense5, dustDense6, ricardo9, ricardo10) ->
     bgroup "getPointCloud"

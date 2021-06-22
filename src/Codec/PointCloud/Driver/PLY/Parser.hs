@@ -4,6 +4,7 @@ module Codec.PointCloud.Driver.PLY.Parser
   ( parsePLY
   , parsePLY'
   , parsePLYV
+  , parseVertexPLY
   , readPLY
   , unflatPLY
   , readFlatPLY
@@ -26,7 +27,8 @@ import Data.Foldable
 import qualified Data.Sequence as S
 import qualified Data.Vector as V
 
-
+import System.IO.Unsafe (unsafePerformIO)
+import Data.Either
 
 parsePLY :: B.ByteString -> Either String PLY
 parsePLY = parseOnly (ply <* endOfInput) 
@@ -43,7 +45,14 @@ parsePLY' = parseOnly (ply' <* endOfInput)
 parsePLYV :: B.ByteString -> Either String PLYV
 parsePLYV = parseOnly (plyV <* endOfInput) 
 
-
+parseVertexPLY :: B.ByteString -> Either String PLY
+parseVertexPLY = parseOnly (filteredPLY vertex <* endOfInput)
+  where
+    vertex = Element "vertex" 0
+             [ (ScalarProperty CharT "x")
+             , (ScalarProperty CharT "y")
+             , (ScalarProperty CharT "z")
+             ]
 
 readPLY :: FilePath -> IO (Either String PLY)
 readPLY file = parsePLY <$> B.readFile file
@@ -82,6 +91,109 @@ plyV = do
   !parsedHeader <- header
   !dataBlocks <- join <$> forM (V.fromList $ hElems parsedHeader) elementDataV
   return $! PLYV parsedHeader dataBlocks
+
+
+filteredPLY :: Element -> Parser PLY
+{-# INLINE filteredPLY #-}
+filteredPLY searchElement = do
+  !parsedHeader <- header
+  let parsedEls = hElems parsedHeader
+  dataBlocks <- join <$> (forM parsedEls $ takeDataBlockByElement searchElement)
+  return $ PLY parsedHeader dataBlocks
+
+takeDataBlockByElement :: Element -> Element -> Parser DataBlocks
+{-# INLINE takeDataBlockByElement #-}
+takeDataBlockByElement searchEl@(Element searchName _ searchProps) el@(Element name num props) =
+  if name /= searchName
+  then count num skipLine *> return []
+  else count num (filteredDataLine searchProps props)
+       --else elementData e
+
+-- elementData :: Element -> Parser [DataLine]
+-- {-# INLINE elementData #-}
+-- elementData e = count (elNum e)
+--                   (skipComments *> dataLine (elProps e))
+
+s1 = Element "vertex" 0
+     [ (ScalarProperty CharT "x")
+     , (ScalarProperty CharT "y")
+     , (ScalarProperty CharT "z")
+     ]
+
+s2 = Element "vertex" 0
+     [ (ScalarProperty CharT "z")
+     , (ScalarProperty CharT "y")
+     , (ScalarProperty CharT "x")
+     ]
+
+s3 = Element "vertex" 0
+     [ (ScalarProperty CharT "x")
+     , (ScalarProperty CharT "red")
+     , (ScalarProperty CharT "blue")
+     ]
+
+s4 = Element "face" 0
+     [(ListProperty CharT CharT "vertex_index")]
+
+s5 = Element "faces" 0
+     [(ListProperty CharT CharT "vertex_index")]
+
+s6 = Element "face" 0
+     [(ListProperty CharT CharT "face_index")]
+
+
+pHeader = fromRight undefined $ parseOnly header simple2
+el1 = head . hElems $ pHeader 
+el2 = head . drop 1 . hElems $ pHeader
+
+simple2 :: B.ByteString
+simple2 = "ply\nformat ascii 1.0\ncomment author: Greg Turk\ncomment object: another cube\nelement vertex 8\nproperty float x\nproperty float y\nproperty float z\nproperty uchar red\nproperty uchar green\nproperty uchar blue\nelement face 7\nproperty list uchar int vertex_index\nelement edge 5\nproperty int vertex1\nproperty int vertex2\nproperty uchar red\nproperty uchar green\nproperty uchar blue\nend_header\n0 0 0 255 0 0\n0 0 1 255 0 0\n0 1 1 255 0 0\n0 1 0 255 0 0\n1 0 0 0 0 255\n1 0 1 0 0 255\n1 1 1 0 0 255\n1 1 0 0 0 255\n3 0 1 2\n3 0 2 3\n4 7 6 5 4\n4 0 4 5 1\n4 1 5 6 2\n4 2 6 7 3\n4 3 7 4 0\n0 1 255 255 255\n1 2 255 255 255\n2 3 255 255 255\n3 0 255 255 255\n2 0 0 0 0\n"
+
+simple2payload :: B.ByteString
+simple2payload = "0 0 0 255 0 0\n0 0 1 255 0 0\n0 1 1 255 0 0\n0 1 0 255 0 0\n1 0 0 0 0 255\n1 0 1 0 0 255\n1 1 1 0 0 255\n1 1 0 0 0 255\n3 0 1 2\n3 0 2 3\n4 7 6 5 4\n4 0 4 5 1\n4 1 5 6 2\n4 2 6 7 3\n4 3 7 4 0\n0 1 255 255 255\n1 2 255 255 255\n2 3 255 255 255\n3 0 255 255 255\n2 0 0 0 0\n"
+
+payload1 :: B.ByteString
+payload1 = "0 0 0 255 0 0\n0 0 1 255 0 0\n0 1 1 255 0 0\n0 1 0 255 0 0\n1 0 0 0 0 255\n1 0 1 0 0 255\n1 1 1 0 0 255\n1 1 0 0 0 255\n"
+
+payload2 :: B.ByteString
+payload2 = "3 0 1 2\n3 0 2 3\n4 7 6 5 4\n4 0 4 5 1\n4 1 5 6 2\n4 2 6 7 3\n4 3 7 4 0\n"
+
+payload3 :: B.ByteString
+payload3 = "0 1 255 255 255\n1 2 255 255 255\n2 3 255 255 255\n3 0 255 255 255\n2 0 0 0 0\n"
+
+
+
+
+
+filteredDataLine :: [Property] -> [Property] -> Parser DataLine
+{-# INLINE filteredDataLine #-}
+filteredDataLine searchProps props = concat <$> traverse (propertyDataByName searchNames) props
+  where searchNames = getPropertyName <$> searchProps
+        getPropertyName prop
+          | (ScalarProperty _ name) <- prop = name
+          | (ListProperty _ _ name) <- prop = name
+
+propertyDataByName :: [B.ByteString] -> Property -> Parser [Scalar]
+{-# INLINE propertyDataByName #-}
+propertyDataByName searchNames (ScalarProperty propType propName) =
+  if propName `elem` searchNames
+  then do
+    !x <- scalar propType <* skipSpace
+    return [x]
+  else do
+    skipScalar
+    return []
+propertyDataByName searchNames (ListProperty indexType propType propName) = do 
+  !x <- scalar indexType <* skipSpace
+  let !c = scalarInt x
+  if propName `elem` searchNames
+    then
+    replicateM c (scalar propType <* skipSpace)
+    else do
+    replicateM c (skipScalar <* skipSpace)
+    return []
+    
+
 
 
 
@@ -242,7 +354,13 @@ float = realToFrac <$> double
 
 -- * Utility parsers
 skipComments :: Parser ()
-skipComments = skipSpace *> ("comment " *> takeLine *> skipComments) <|> pure ()
+skipComments = skipSpace *> ("comment" *> takeLine *> skipComments) <|> pure ()
+
+skipLine :: Parser ()
+skipLine = (skipWhile $ not . isEndOfLine . c2w) <* skipSpace
+
+skipScalar :: Parser ()
+skipScalar = (skipWhile $ not . isSpace) <* skipSpace
 
 skipElementData :: Element -> Parser ()
 skipElementData e = count (elNum e) (skipComments *> takeLine) *> pure ()

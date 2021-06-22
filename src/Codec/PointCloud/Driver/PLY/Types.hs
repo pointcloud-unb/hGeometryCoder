@@ -72,12 +72,12 @@ data ScalarType = CharT
                 | DoubleT
                 deriving (Eq, Show, Generic, Flat, NFData)
 
-data Scalar = CharS   !Int8
-            | UcharS  !Word8
-            | ShortS  !Int16
-            | UshortS !Word16
-            | IntS    !Int
-            | UintS   !Word32
-            | FloatS  !Float
-            | DoubleS !Double
+data Scalar = CharS   {-# UNPACK #-} !Int8
+            | UcharS  {-# UNPACK #-} !Word8
+            | ShortS  {-# UNPACK #-} !Int16
+            | UshortS {-# UNPACK #-} !Word16
+            | IntS    {-# UNPACK #-} !Int
+            | UintS   {-# UNPACK #-} !Word32
+            | FloatS  {-# UNPACK #-} !Float
+            | DoubleS {-# UNPACK #-} !Double
             deriving (Show, Generic, Flat, NFData)
