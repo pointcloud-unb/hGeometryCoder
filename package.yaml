@@ -29,6 +29,7 @@ dependencies:
 - matrix
 - deepseq
 - flat
+- hspec
 
 library:
   source-dirs: src
@@ -46,8 +47,8 @@ executables:
     - hGeometryCoder
 
 tests:
-  hGeometryCoder-test:
-    main:                Spec.hs
+  pc2PLY-test:
+    main:                pc2PLY_test.hs
     source-dirs:         test
     ghc-options:
     - -threaded
