@@ -56,6 +56,42 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - hGeometryCoder
+  backAndForth-test:
+    main:                backAndForth_test.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - hGeometryCoder
+  pc-test:
+    main:                pc_test.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - hGeometryCoder
+  encode-test:
+    main:                encode_test.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - hGeometryCoder
+  parser-test:
+    main:                parsePLY_test.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - hGeometryCoder     
 
 benchmarks:
   parser-bench:
