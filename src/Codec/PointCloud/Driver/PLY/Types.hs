@@ -23,6 +23,13 @@ data PLY = PLY { plyHeader :: !Header
 type DataBlocks = [DataLine]
 type DataLine = [Scalar]
 
+
+-- PLY representation --
+data PLY2 = PLY2 { plyHeader2 :: !Header
+                 , plyData2   :: [DataBlocks] }
+  deriving (Show, Generic, Flat, NFData)
+
+
 -- PLY using Sequence -- 
 data PLY' = PLY' { plyHeader' :: !Header
                  , plyData'   :: DataBlocks' }
