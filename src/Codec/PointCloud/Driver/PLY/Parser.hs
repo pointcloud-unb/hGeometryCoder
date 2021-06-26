@@ -66,7 +66,7 @@ readFlatPLY file = unflatPLY <$> B.readFile file
 -- | Parse the PLY header
 header :: Parser Header
 header = Header <$> preamble <*> elements <* "end_header" <* endOfLine
-  where preamble = ("ply" <|> "PLY") *> endOfLine *> format <* skipSpace
+  where preamble = ("ply" *> endOfLine) *> format <* skipSpace
         elements = many1 (skipComments *> element <* skipSpace)
 
 ply :: Parser PLY
