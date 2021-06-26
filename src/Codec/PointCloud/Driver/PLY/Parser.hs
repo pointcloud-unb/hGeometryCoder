@@ -73,7 +73,6 @@ ply :: Parser PLY
 ply = do
   !parsedHeader <- header
   !dataBlocks <- join <$> forM (hElems parsedHeader) elementData
---  !dataBlocks <- foldMap' elementData (hElems parsedHeader)
   return $! PLY parsedHeader dataBlocks
 
 ply' :: Parser PLY'
@@ -87,133 +86,48 @@ filteredPLY :: Element -> Parser PLY
 --{-# INLINE filteredPLY #-}
 filteredPLY searchElement = do
   !parsedHeader <- header
-  let parsedEls = hElems parsedHeader
-  !dataBlocks <- join <$> (forM parsedEls $ takeDataBlockByElement searchElement)
---  !dataBlocks <- foldMap' (takeDataBlockByElement searchElement) parsedEls
+  !dataBlocks <- join <$> (forM (hElems parsedHeader) $ takeDataBlockByElement searchElement)
   return $ PLY parsedHeader dataBlocks
 
-
---filteredPLYB :: Element -> Parser PLY
---{-# INLINE filteredPLYB #-}
-filteredPLYB searchElement = do
-  !parsedHeader <- header
-  dataBlocks <- takeByteString
-  let dataLines  = B.lines dataBlocks
-
-      parsedEls  = hElems parsedHeader
-
-      searchName = elName searchElement
-      searchPropNames = getPropertyName <$> elProps searchElement
-      selectedProps = fromRight undefined $ foldSelect searchPropNames (Left <$> elProps searchElement)
-  
-      filteredDataLines = fromRight undefined $ filterDataLines searchName parsedEls dataLines
-      parsedLines = fmap (\line -> parseLine selectedProps line []) $ B.words <$> filteredDataLines
-      
-  return $ (parsedLines)
-
-
-filterDataLines :: B.ByteString -> [Element] -> [B.ByteString] -> Either String [B.ByteString]
-filterDataLines _ [] _ = Left "Element not found..."
-filterDataLines _ _ [] = Left "Not enough data lines..."
-filterDataLines searchName (Element name num _ : els) dls =
-  if name == searchName
-  then Right $ take num dls
-  else filterDataLines searchName els $ drop num dls
-
-
-
-parseLine :: [Either Property Property] -> [B.ByteString] -> [B.ByteString] -> [B.ByteString]
-parseLine [] _ acc = acc
-parseLine (Left (ScalarProperty _ _):ps) (b:bs) acc = parseLine ps bs acc
-parseLine (Left (ListProperty indexType _ _):ps) (b:bs) acc = parseLine ps (drop n bs) acc
-  where
-    n = parseScalar' indexType b
-parseLine (Right (ScalarProperty _ _):ps) (b:bs) acc = parseLine ps bs (acc ++ [b])
-parseLine (Right (ListProperty indexType _ _):ps) (b:bs) acc = parseLine ps (drop n bs) (acc ++ take n bs)
-  where
-    n = parseScalar' indexType b
-
-
-
-
-parseScalar' :: (Integral a) => ScalarType -> B.ByteString -> a
-parseScalar' CharT b   = maybe 0 fst $
-  Data.ByteString.Lex.Integral.readSigned Data.ByteString.Lex.Integral.readDecimal b
-parseScalar' UcharT b  = 
-  Data.ByteString.Lex.Integral.readDecimal_ b
-parseScalar' ShortT b  = maybe 0 fst $
-  Data.ByteString.Lex.Integral.readSigned Data.ByteString.Lex.Integral.readDecimal b
-parseScalar' UshortT b = 
-  Data.ByteString.Lex.Integral.readDecimal_ b
-parseScalar' IntT b    = maybe 0 fst $ 
-  Data.ByteString.Lex.Integral.readSigned Data.ByteString.Lex.Integral.readDecimal b
-parseScalar' UintT b   = 
-  Data.ByteString.Lex.Integral.readDecimal_ b
-parseScalar' FloatT b  = maybe 0 (round . fst) $ 
-  Data.ByteString.Lex.Fractional.readSigned Data.ByteString.Lex.Fractional.readExponential b
-parseScalar' DoubleT b = maybe 0 (round . fst) $ 
-  Data.ByteString.Lex.Fractional.readSigned Data.ByteString.Lex.Fractional.readExponential b
-
-
-foldSelect :: [B.ByteString] -> [Either Property Property] -> Either String [Either Property Property]
-foldSelect [] ps = Right ps
-foldSelect (n:ns) ps = do
-  ps' <- select n ps
-  foldSelect ns ps'
- 
-select :: B.ByteString -> [Either Property Property] -> Either String [Either Property Property]
-select name ps = if switched
-                 then Right $ p'
-                 else Left "Property name not found..."
-  where
-    f p = if (propName' p == name)
-          then (switchEither p, True)
-          else (p, False)
-    (p', bs) = unzip . fmap f $  ps
-    switched = or bs
-
-propName' :: Either Property Property -> B.ByteString
-propName' (Left p)  = propName p
-propName' (Right p) = propName p
-
-propName :: Property -> B.ByteString
-propName (ScalarProperty _ name) = name
-propName (ListProperty _ _ name) = name
- 
-switchEither :: Either a a -> Either a a
-switchEither (Right x) = Left x
-switchEither (Left x)  = Right x
-
-
-getPropertyName prop
-  | (ScalarProperty _ name) <- prop = name
-  | (ListProperty _ _ name) <- prop = name
-
-
-
-filteredPLY2 :: Element -> Parser PLY2
---{-# INLINE filteredPLY2 #-}
-filteredPLY2 searchElement = do
-  !parsedHeader <- header
-  let parsedEls = hElems parsedHeader
-  dataBlocks <- forM parsedEls $ takeDataBlockByElement searchElement
-  return $ PLY2 parsedHeader dataBlocks
-
-
-
-
-
-  
--- foldMapV :: (Monoid m, V.Vector v a) => (a -> m) -> v a -> m
--- {-# INLINE foldMapV #-}
--- foldMapV f = V.foldr (mappend . f) mempty
 
 takeDataBlockByElement :: Element -> Element -> Parser DataBlocks
 --{-# INLINE takeDataBlockByElement #-}
 takeDataBlockByElement (Element searchName _ searchProps) (Element name num props) =
   if name /= searchName
   then count num skipLine *> return []
-  else count num (filteredDataLine' searchProps props)
+  else count num (filteredDataLine searchProps props)
+
+
+filteredDataLine :: [Property] -> [Property] -> Parser DataLine
+--{-# INLINE filteredDataLine #-}
+filteredDataLine searchProps props = concat <$> traverse propertyDataByName ps
+  where
+    ps = fromRight undefined $ foldSelect searchNames (Left <$> props)
+    searchNames = getPropertyName <$> searchProps
+    getPropertyName prop
+      | (ScalarProperty _ name) <- prop = name
+      | (ListProperty _ _ name) <- prop = name
+
+propertyDataByName :: Either Property Property -> Parser [Scalar]
+--{-# INLINE propertyDataByName #-}
+propertyDataByName (Left (ScalarProperty _ _)) =
+  skipScalar *> return []
+propertyDataByName (Right (ScalarProperty propType _)) =
+  do
+    x <- scalar propType <* skipSpace
+    return [x]
+propertyDataByName (Left (ListProperty indexType _ _)) =
+  do
+    x <- scalar indexType <* skipSpace
+    let c = scalarInt x
+    count c (skipScalar <* skipSpace) *> return []
+propertyDataByName (Right (ListProperty indexType propType _)) =
+  do
+    x <- scalar indexType <* skipSpace
+    let c = scalarInt x
+    count c (scalar propType <* skipSpace)
+
+
 
 
 s1 = Element "vertex" 0
@@ -262,85 +176,6 @@ payload2 = "3 0 1 2\n3 0 2 3\n4 7 6 5 4\n4 0 4 5 1\n4 1 5 6 2\n4 2 6 7 3\n4 3 7 
 
 payload3 :: B.ByteString
 payload3 = "0 1 255 255 255\n1 2 255 255 255\n2 3 255 255 255\n3 0 255 255 255\n2 0 0 0 0\n"
-
-
-
-
-
-filteredDataLine :: [Property] -> [Property] -> Parser DataLine
---{-# INLINE filteredDataLine #-}
-filteredDataLine searchProps props = concat <$> traverse (propertyDataByName searchNames) props
---filteredDataLine searchProps props = foldMap' (propertyDataByName searchNames) props
-  where searchNames = getPropertyName <$> searchProps
-        getPropertyName prop
-          | (ScalarProperty _ name) <- prop = name
-          | (ListProperty _ _ name) <- prop = name
-
-
-
-
-
-
-
-
-
-propertyDataByName :: [B.ByteString] -> Property -> Parser [Scalar]
---{-# INLINE propertyDataByName #-}
-propertyDataByName searchNames (ScalarProperty propType propName) =
-  if propName `elem` searchNames
-  then do
-    !x <- scalar propType <* skipSpace
-    return [x]
-  else do
-    skipScalar
-    return []
-propertyDataByName searchNames (ListProperty indexType propType propName) = do 
-  !x <- scalar indexType <* skipSpace
-  let !c = scalarInt x
-  if propName `elem` searchNames
-    then
-    replicateM c (scalar propType <* skipSpace)
-    else do
-    replicateM c (skipScalar <* skipSpace)
-    return []
-
-
-
-filteredDataLine' :: [Property] -> [Property] -> Parser DataLine
-{-# INLINE filteredDataLine' #-}
-filteredDataLine' searchProps props = concat <$> traverse propertyDataByName' ps
-  where
-    ps = fromRight undefined $ foldSelect searchNames (Left <$> props)
-    searchNames = getPropertyName <$> searchProps
-    getPropertyName prop
-      | (ScalarProperty _ name) <- prop = name
-      | (ListProperty _ _ name) <- prop = name
-
-propertyDataByName' :: Either Property Property -> Parser [Scalar]
-{-# INLINE propertyDataByName' #-}
-propertyDataByName' (Left (ScalarProperty _ _)) =
-  skipScalar *> return []
-propertyDataByName' (Right (ScalarProperty propType _)) =
-  do
-    x <- scalar propType <* skipSpace
-    return [x]
-propertyDataByName' (Left (ListProperty indexType _ _)) =
-  do
-    x <- scalar indexType <* skipSpace
-    let c = scalarInt x
-    count c (skipScalar <* skipSpace) *> return []
-propertyDataByName' (Right (ListProperty indexType propType _)) =
-  do
-    x <- scalar indexType <* skipSpace
-    let c = scalarInt x
-    count c (scalar propType <* skipSpace)
-
-
-
-
-
-    
-
 
 
 
@@ -480,7 +315,7 @@ float = realToFrac <$> double
 
 -- double implemented by attoparsec already
 
--- * Utility parsers
+-- * Utility parsers and functions
 skipComments :: Parser ()
 {-# INLINE skipComments #-}
 skipComments = skipSpace *> ("comment" *> takeLine *> skipComments) <|> pure ()
@@ -502,4 +337,35 @@ takeLine = takeTill $ isEndOfLine . c2w
 c2w :: Char -> Word8
 c2w = fromIntegral . ord
 {-# INLINE c2w #-}
+
+
+foldSelect :: [B.ByteString] -> [Either Property Property] -> Either String [Either Property Property]
+foldSelect [] ps = Right ps
+foldSelect (n:ns) ps = do
+  ps' <- select n ps
+  foldSelect ns ps'
+ 
+select :: B.ByteString -> [Either Property Property] -> Either String [Either Property Property]
+select name ps = if switched
+                 then Right $ p'
+                 else Left "Property name not found..."
+  where
+    f p = if (propName' p == name)
+          then (switchEither p, True)
+          else (p, False)
+    (p', bs) = unzip . fmap f $  ps
+    switched = or bs
+
+propName' :: Either Property Property -> B.ByteString
+propName' (Left p)  = propName p
+propName' (Right p) = propName p
+
+propName :: Property -> B.ByteString
+propName (ScalarProperty _ name) = name
+propName (ListProperty _ _ name) = name
+ 
+switchEither :: Either a a -> Either a a
+switchEither (Right x) = Left x
+switchEither (Left x)  = Right x
+
 
