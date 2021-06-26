@@ -3,7 +3,6 @@
 module Codec.PointCloud.Driver.PLY.Parser
   ( parsePLY
   , parsePLY'
-  , parsePLYV
   , parseVertexPLY
   , readPLY
   , unflatPLY
@@ -28,7 +27,6 @@ import qualified Data.ByteString.Lex.Integral
 
 import qualified Data.ByteString.Char8 as B
 import qualified Data.Sequence as S
-import qualified Data.Vector as V
 
 import System.IO.Unsafe (unsafePerformIO)
 import Data.Either
@@ -41,21 +39,8 @@ parsePLY' :: B.ByteString -> Either String PLY'
 parsePLY' = parseOnly (ply' <* endOfInput) 
 
 
--- PLY using Vector for benchmarking --
-parsePLYV :: B.ByteString -> Either String PLYV
-parsePLYV = parseOnly (plyV <* endOfInput) 
-
 parseVertexPLY :: B.ByteString -> Either String PLY
 parseVertexPLY = parseOnly (filteredPLY vertex <* endOfInput)
-  where
-    vertex = Element "vertex" 0
-             [ (ScalarProperty CharT "x")
-             , (ScalarProperty CharT "y")
-             , (ScalarProperty CharT "z")
-             ]
-
-parseVertexPLYV :: B.ByteString -> Either String PLYV
-parseVertexPLYV = parseOnly (filteredPLYV vertex <* endOfInput)
   where
     vertex = Element "vertex" 0
              [ (ScalarProperty CharT "x")
@@ -96,12 +81,6 @@ ply' = do
   !parsedHeader <- header
   !dataBlocks <- join <$> forM (S.fromList $ hElems parsedHeader) elementData'
   return $! PLY' parsedHeader dataBlocks
-
-plyV :: Parser PLYV
-plyV = do
-  !parsedHeader <- header
-  !dataBlocks <- join <$> forM (V.fromList $ hElems parsedHeader) elementDataV
-  return $! PLYV parsedHeader dataBlocks
 
 
 filteredPLY :: Element -> Parser PLY
@@ -222,14 +201,6 @@ filteredPLY2 searchElement = do
 
 
 
-filteredPLYV :: Element -> Parser PLYV
-{-# INLINE filteredPLYV #-}
-filteredPLYV searchElement = do
-  !parsedHeader <- header
-  let parsedEls = hElems parsedHeader
-  !dataBlocks <- V.foldr (mappend . (takeDataBlockByElementV searchElement)) mempty (V.fromList parsedEls)
-  return $ PLYV parsedHeader dataBlocks
-
 
 
   
@@ -243,13 +214,6 @@ takeDataBlockByElement (Element searchName _ searchProps) (Element name num prop
   if name /= searchName
   then count num skipLine *> return []
   else count num (filteredDataLine' searchProps props)
-
-takeDataBlockByElementV :: Element -> Element -> Parser DataBlocksV
-{-# INLINE takeDataBlockByElementV #-}
-takeDataBlockByElementV searchEl@(Element searchName _ searchProps) el@(Element name num props) =
-  if name /= searchName
-  then V.replicateM num skipLine *> return V.empty
-  else V.replicateM num (filteredDataLineV searchProps props)
 
 
 s1 = Element "vertex" 0
@@ -315,14 +279,6 @@ filteredDataLine searchProps props = concat <$> traverse (propertyDataByName sea
 
 
 
-filteredDataLineV :: [Property] -> [Property] -> Parser DataLineV
-{-# INLINE filteredDataLineV #-}
-filteredDataLineV searchProps props = V.concat <$> traverse (propertyDataByNameV searchNames) props
-  where searchNames = getPropertyName <$> searchProps
-        getPropertyName prop
-          | (ScalarProperty _ name) <- prop = name
-          | (ListProperty _ _ name) <- prop = name
-
 
 
 
@@ -383,26 +339,6 @@ propertyDataByName' (Right (ListProperty indexType propType _)) =
 
 
 
-
-propertyDataByNameV :: [B.ByteString] -> Property -> Parser (V.Vector Scalar)
-{-# INLINE propertyDataByNameV #-}
-propertyDataByNameV searchNames (ScalarProperty propType propName) =
-  if propName `elem` searchNames
-  then do
-    !x <- scalar propType <* skipSpace
-    return $ V.singleton x
-  else do
-    skipScalar
-    return V.empty
-propertyDataByNameV searchNames (ListProperty indexType propType propName) = do 
-  !x <- scalar indexType <* skipSpace
-  let !c = scalarInt x
-  if propName `elem` searchNames
-    then
-    V.replicateM c (scalar propType <* skipSpace)
-    else do
-    V.replicateM c (skipScalar <* skipSpace)
-    return $ V.empty
     
 
 
@@ -419,10 +355,6 @@ elementData e = count (elNum e)
 elementData' :: Element -> Parser DataBlocks'
 {-# INLINE elementData' #-}
 elementData' e = S.replicateM (elNum e) (skipComments *> dataLine' (elProps e))
-
-elementDataV :: Element -> Parser DataBlocksV
-{-# INLINE elementDataV #-}
-elementDataV e = V.replicateM (elNum e) (skipComments *> dataLineV (elProps e))
 
 
 
@@ -491,22 +423,7 @@ propertyData' (ListProperty indexType propType _) = do
   S.replicateM c (scalar propType <* skipSpace)
 
 
-
-dataLineV :: [Property] -> Parser DataLineV
-{-# INLINE dataLineV #-}
-dataLineV ps = V.concat <$> traverse propertyDataV ps
-
-
-propertyDataV :: Property -> Parser (V.Vector Scalar)
-{-# INLINE propertyDataV #-}
-propertyDataV (ScalarProperty propType _) = do
-  !x <- scalar propType <* skipSpace
-  return $ V.singleton x
-propertyDataV (ListProperty indexType propType _) = do
-  !x <- scalar indexType <* skipSpace
-  let !c = scalarInt x
-  V.replicateM c (scalar propType <* skipSpace)
-  
+ 
 
 
 -- | Extract an Int from the Scalar types. Return 0 if float or double.
