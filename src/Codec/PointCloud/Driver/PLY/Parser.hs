@@ -242,7 +242,7 @@ skipElementData :: Element -> Parser ()
 skipElementData e = count (elNum e) (skipComments *> takeLine) *> pure ()
 
 skipRestOfLine :: Parser ()
-skipRestOfLine = skipWhile (not . isEndOfLine) >> endOfLine
+skipRestOfLine = skipWhile (not . isEndOfLine . c2w) >> endOfLine
 
 takeLine :: Parser B.ByteString
 {-# INLINE takeLine #-}
