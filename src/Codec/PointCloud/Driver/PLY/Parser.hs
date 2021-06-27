@@ -239,7 +239,7 @@ foldSelect (n:ns) ps = do
 select :: B.ByteString -> [Either Property Property] -> Either String [Either Property Property]
 select name ps = if switched
                  then Right $ p'
-                 else Left "Property name not found..."
+                 else Left $ "Property " <> B.unpack name <> " not found..."
   where
     f p = if (propName' p == name)
           then (switchEither p, True)
@@ -248,16 +248,14 @@ select name ps = if switched
     switched = or bs
 
 propName' :: Either Property Property -> B.ByteString
-propName' (Left p)  = propName p
-propName' (Right p) = propName p
+propName' = either propName propName
 
 propName :: Property -> B.ByteString
 propName (ScalarProperty _ name) = name
 propName (ListProperty _ _ name) = name
  
 switchEither :: Either a a -> Either a a
-switchEither (Right x) = Left x
-switchEither (Left x)  = Right x
+switchEither = either Right Right
 
 isScalarProperty :: Property -> Bool
 {-# INLINE isScalarProperty #-}
