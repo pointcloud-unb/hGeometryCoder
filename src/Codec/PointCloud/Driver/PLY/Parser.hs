@@ -143,7 +143,7 @@ takeDataBlockByElement'' (Element searchName _ searchProps) (Element name num pr
   then count num skipLine *> (return Nothing)
   else let !ps = fromRight undefined $ foldSelect (propName <$> searchProps) (Left <$> props)
            accParser num parser = foldM worker ([], 0) (replicate num parser) 
-           worker (xs, size) parser = do
+           worker !(!xs, !size) parser = do
              !x <- parser
              maybe (return (xs, size)) (\(voxel, vxSize) -> return (voxel:xs, max size vxSize)) x
        in

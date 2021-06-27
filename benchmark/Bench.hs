@@ -3,7 +3,7 @@
 module Main where
 
 import Codec.PointCloud.Driver.PLY.Types
-import Codec.PointCloud.Driver.PLY.Parser (parsePLY, parseVertexPLY, parsePointCloud, readPLY, readFlatPLY, unflatPLY)
+import Codec.PointCloud.Driver.PLY.Parser (parsePLY, parseVertexPLY, parsePointCloud', readPLY, readFlatPLY, unflatPLY)
 import Codec.PointCloud.Driver.PLY.Output (writePLY, putPLY, flatPLY, writeFlatPLY)
 
 import Codec.PointCloud.Types.PointCloud
@@ -96,7 +96,7 @@ parseVertexPLYBench = env plyLoadEnv $ \ ~(dustDense5, dustDense6, ricardo9, ric
      ]
 
 parsePointCloudBench = env plyLoadEnv $ \ ~(dustDense5, dustDense6, ricardo9, ricardo10) ->
-  let benchFunction = parsePointCloud
+  let benchFunction = parsePointCloud'
   in bgroup "parsePointCloud"
      [ bench "dustDense5.ply" $ nf benchFunction dustDense5
 --   , bench "dustDense6.ply" $ nf benchFunction dustDense6

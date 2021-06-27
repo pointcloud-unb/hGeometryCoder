@@ -3,7 +3,7 @@ module Codec.PointCloud.Driver.PLY
     -- Input functions --
     parsePLY
   , parseVertexPLY
-  , parsePointCloud
+  , parsePointCloud'
   , readPLY
   , unflatPLY
   , readFlatPLY
