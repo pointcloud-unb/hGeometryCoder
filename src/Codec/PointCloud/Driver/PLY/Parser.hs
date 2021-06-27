@@ -41,7 +41,7 @@ parsePointCloud = parseOnly (filteredPLY' vertex <* endOfInput)
              , (ScalarProperty CharT "z")
              ]
 
---parsePointCloud' :: B.ByteString -> Either String PC.PointCloud
+parsePointCloud' :: B.ByteString -> Either String PC.PointCloud
 parsePointCloud' = parseOnly (filteredPLY'' vertex <* endOfInput)
   where
     vertex = Element "vertex" 0
@@ -92,13 +92,21 @@ filteredPLY' searchElement = do
   !parsedHeader <- header
   PC.fromList . catMaybes . join <$> forM (hElems parsedHeader) (takeDataBlockByElement' searchElement)
   
---filteredPLY'' :: Element -> Parser PC.PointCloud
+filteredPLY'' :: Element -> Parser PC.PointCloud
 {-# INLINE filteredPLY'' #-}
 filteredPLY'' searchElement = do
   !parsedHeader <- header
   -- PC.fromList' . join <$> forM (hElems parsedHeader) (takeDataBlockByElement' searchElement) 
-  forM (hElems parsedHeader) (takeDataBlockByElement'' searchElement)
-
+  safeHead . catMaybes <$> forM (hElems parsedHeader) (takeDataBlockByElement'' searchElement)
+    where
+      safeHead [] = mempty
+      safeHead (x:_) = x
+      
+vertex = Element "vertex" 0
+         [ (ScalarProperty CharT "x")
+         , (ScalarProperty CharT "y")
+         , (ScalarProperty CharT "z")
+         ]
 
 
 
@@ -128,11 +136,11 @@ takeDataBlockByElement' (Element searchName _ searchProps) (Element name num pro
 
 
 --takeDataBlockByElement'' :: Element -> Element -> Parser ([Voxel], Int)
-takeDataBlockByElement'' :: Element -> Element -> Parser PC.PointCloud
+takeDataBlockByElement'' :: Element -> Element -> Parser (Maybe PC.PointCloud)
 {-# INLINE takeDataBlockByElement'' #-}
 takeDataBlockByElement'' (Element searchName _ searchProps) (Element name num props) =
   if name /= searchName
-  then count num skipLine *> mempty
+  then count num skipLine *> (return Nothing)
   else let !ps = fromRight undefined $ foldSelect (propName <$> searchProps) (Left <$> props)
            accParser num parser = foldM worker ([], 0) (replicate num parser) 
            worker (xs, size) parser = do
@@ -142,10 +150,10 @@ takeDataBlockByElement'' (Element searchName _ searchProps) (Element name num pr
          if allScalars searchProps props
          then do
            parsed <- accParser num (filteredDataLine'' ps)
-           return $ PC.fromList' parsed
+           return $ Just $ PC.fromList' parsed
          else do
            parsed <- accParser num (filteredDataLine'' ps)
-           return $ PC.fromList' parsed
+           return $ Just $ PC.fromList' parsed
 
            
 filteredDataLine :: [Either Property Property] -> Parser DataLine
