@@ -4,17 +4,17 @@ module Codec.PointCloud.Driver.PLY.Parser where
 
 import Codec.PointCloud.Driver.PLY.Types
 import Codec.PointCloud.Types.Voxel
-import qualified Codec.PointCloud.Types.PointCloud as PC (PointCloud, fromList)
+import qualified Codec.PointCloud.Types.PointCloud as PC 
 
 import Flat
 import Control.Applicative
-import Control.Monad (join, forM, replicateM, (<$!>))
+import Control.Monad (join, forM, replicateM, (<$!>), foldM)
 import Data.Char (ord)
 import Data.Attoparsec.ByteString.Char8 hiding (char, take)
 import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
 import Data.Either
-import Data.Maybe (catMaybes)
+import Data.Maybe (maybe, catMaybes)
 
 import qualified Data.ByteString.Char8 as B
 
@@ -34,6 +34,15 @@ parseVertexPLY = parseOnly (filteredPLY vertex <* endOfInput)
 
 parsePointCloud :: B.ByteString -> Either String PC.PointCloud
 parsePointCloud = parseOnly (filteredPLY' vertex <* endOfInput)
+  where
+    vertex = Element "vertex" 0
+             [ (ScalarProperty CharT "x")
+             , (ScalarProperty CharT "y")
+             , (ScalarProperty CharT "z")
+             ]
+
+--parsePointCloud' :: B.ByteString -> Either String PC.PointCloud
+parsePointCloud' = parseOnly (filteredPLY'' vertex <* endOfInput)
   where
     vertex = Element "vertex" 0
              [ (ScalarProperty CharT "x")
@@ -83,6 +92,14 @@ filteredPLY' searchElement = do
   !parsedHeader <- header
   PC.fromList . catMaybes . join <$> forM (hElems parsedHeader) (takeDataBlockByElement' searchElement)
   
+--filteredPLY'' :: Element -> Parser PC.PointCloud
+{-# INLINE filteredPLY'' #-}
+filteredPLY'' searchElement = do
+  !parsedHeader <- header
+  -- PC.fromList' . join <$> forM (hElems parsedHeader) (takeDataBlockByElement' searchElement) 
+  forM (hElems parsedHeader) (takeDataBlockByElement'' searchElement)
+
+
 
 
 -- Low level parsers -- 
@@ -110,7 +127,27 @@ takeDataBlockByElement' (Element searchName _ searchProps) (Element name num pro
          else count num (filteredDataLine' ps)
 
 
+--takeDataBlockByElement'' :: Element -> Element -> Parser ([Voxel], Int)
+takeDataBlockByElement'' :: Element -> Element -> Parser PC.PointCloud
+{-# INLINE takeDataBlockByElement'' #-}
+takeDataBlockByElement'' (Element searchName _ searchProps) (Element name num props) =
+  if name /= searchName
+  then count num skipLine *> mempty
+  else let !ps = fromRight undefined $ foldSelect (propName <$> searchProps) (Left <$> props)
+           accParser num parser = foldM worker ([], 0) (replicate num parser) 
+           worker (xs, size) parser = do
+             !x <- parser
+             maybe (return (xs, size)) (\(voxel, vxSize) -> return (voxel:xs, max size vxSize)) x
+       in
+         if allScalars searchProps props
+         then do
+           parsed <- accParser num (filteredDataLine'' ps)
+           return $ PC.fromList' parsed
+         else do
+           parsed <- accParser num (filteredDataLine'' ps)
+           return $ PC.fromList' parsed
 
+           
 filteredDataLine :: [Either Property Property] -> Parser DataLine
 {-# INLINE filteredDataLine #-}
 filteredDataLine ps = concat <$> traverse propertyDataByName ps
@@ -121,7 +158,15 @@ filteredDataLine' ps = mkVoxel . concat <$> traverse propertyDataByName ps
   where
     mkVoxel (s1:s2:s3:_) = Just $ Voxel (scalarInt s1) (scalarInt s2) (scalarInt s3)
     mkVoxel _ = Nothing
+
+filteredDataLine'' :: [Either Property Property] -> Parser (Maybe (Voxel, Int))
+{-# INLINE filteredDataLine'' #-}
+filteredDataLine'' ps = mkVoxel . concat <$> traverse propertyDataByName ps
+  where
+    mkVoxel (s1:s2:s3:_) = Just (Voxel (scalarInt s1) (scalarInt s2) (scalarInt s3), maximum $ scalarInt <$> [s1,s2,s3] )
+    mkVoxel _ = Nothing
                       
+                
 propertyDataByName :: Either Property Property -> Parser [Scalar]
 {-# INLINE propertyDataByName #-}
 propertyDataByName (Left (ScalarProperty _ _)) =

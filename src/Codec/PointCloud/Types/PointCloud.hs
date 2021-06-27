@@ -63,6 +63,9 @@ fromList vs = PointCloud set size
     set = S.fromList vs
     size = computePower2 . largestDimension . S.findMax $ set
 
+fromList' :: ([Voxel], Int) -> PointCloud
+fromList' (voxels, size) = PointCloud (S.fromList voxels) (computePower2 size)
+
 -- The following is very bad...
 -- fromList :: [Voxel] -> PointCloud
 -- fromList vs = PointCloud set size
