@@ -131,8 +131,7 @@ propertyDataByNameScalars (Right (ScalarProperty propType _)) =
 
 elementData :: Element -> Parser [DataLine]
 {-# INLINE elementData #-}
-elementData e = count (elNum e)
-                  (skipComments *> dataLine (elProps e))
+elementData e = count (elNum e) (dataLine (elProps e))
 
 
 format :: Parser Format
