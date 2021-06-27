@@ -7,7 +7,7 @@ import Codec.PointCloud.Compression.Dyadic
 import Codec.PointCloud.Compression.PLY (pc2PLY)
 --import Codec.PointCloud.Driver.PLY.Parser (parsePLY, parseVertexPLY)
 --import Codec.PointCloud.Driver.PLY.Output (writePLY)
-import Codec.PointCloud.Driver.PLY (parsePLY, parseVertexPLY, writePLY)
+import Codec.PointCloud.Driver.PLY (parsePLY, parsePointCloud, writePLY)
 
 import Codec.PointCloud.Driver.EDX.Bitstream
 import qualified Data.ByteString as B (readFile, writeFile, pack)
@@ -44,7 +44,7 @@ main = do
       exitSuccess
     (Parse input) -> do
       fileContents <- B.readFile input
-      parsed <- evaluate $ force $ parseVertexPLY fileContents
+      parsed <- evaluate $ force $ parsePointCloud fileContents
       putStrLn $ "Parse finished"
     (Error mError) -> do
       putStrLn mError

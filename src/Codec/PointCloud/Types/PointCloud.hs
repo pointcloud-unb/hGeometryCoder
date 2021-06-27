@@ -63,6 +63,19 @@ fromList vs = PointCloud set size
     set = S.fromList vs
     size = computePower2 . largestDimension . S.findMax $ set
 
+-- The following is very bad...
+-- fromList :: [Voxel] -> PointCloud
+-- fromList vs = PointCloud set size
+--   where
+--     (set, size) = foldl' worker (S.empty, 0) vs
+--     worker (set, size) voxel = (S.insert voxel set, newSize)
+--       where
+--         voxelSize = computePower2 . largestDimension $ voxel
+--         newSize = if voxelSize > size
+--                   then voxelSize
+--                   else size
+
+
 getPointCloud :: Axis -> PLY -> Either String PointCloud
 getPointCloud axis ply = getCoordinatesIndexes (plyHeader ply) >>= extractVoxels axis (plyData ply)
 

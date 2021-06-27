@@ -83,10 +83,10 @@ propertySpec = do
       it "property list char char x" $
         ("property list char char x" :: B.ByteString) ~> property `shouldParse`
         ListProperty CharT CharT "x"
-      it "property char x - spaces in between" $
+      it "property list char char x - spaces in between" $
         ("  property list   char   char   x  " :: B.ByteString) ~> property `shouldParse`
         ListProperty CharT CharT "x"
-      it "property char x - tabs in between" $
+      it "property list char char x - tabs in between" $
         ("\tproperty list\tchar\tchar\tx\t" :: B.ByteString) ~> property `shouldParse`
         ListProperty CharT CharT "x"
       it "\"property list\" should be treated as keyword - no spaces between words" $
