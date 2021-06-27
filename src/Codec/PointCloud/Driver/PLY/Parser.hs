@@ -142,7 +142,7 @@ format = "format" *> skipSpace *> (ascii <|> binaryLE <|> binaryBE)
 
 element :: Parser Element
 element = Element <$> (skipSpace *> "element " *> takeTill isSpace)
-                  <*> (skipSpace *> int <* skipSpace)
+                  <*> (skipSpace *> (signed decimal) <* skipSpace)
                   <*> (many' property)
 
 property :: Parser Property
@@ -185,45 +185,15 @@ propertyData (ListProperty indexType propType _) = do
 -- * Scalar parser
 scalar :: ScalarType -> Parser Scalar
 {-# INLINE scalar #-}
-scalar !CharT   = CharS   <$!> char
-scalar !UcharT  = UcharS  <$!> uchar
-scalar !ShortT  = ShortS  <$!> int16
-scalar !UshortT = UshortS <$!> uint16
-scalar !IntT    = IntS    <$!> int
-scalar !UintT   = UintS   <$!> uint
-scalar !FloatT  = FloatS  <$!> float
-scalar !DoubleT = DoubleS <$!> double
+scalar CharT   = CharS   <$!> signed decimal
+scalar UcharT  = UcharS  <$!> decimal
+scalar ShortT  = ShortS  <$!> signed decimal
+scalar UshortT = UshortS <$!> decimal
+scalar IntT    = IntS    <$!> signed decimal
+scalar UintT   = UintS   <$!> decimal
+scalar FloatT  = FloatS  <$!> (realToFrac <$> double)
+scalar DoubleT = DoubleS <$!> double
 
--- * Numeric parsers
-char :: Parser Int8
-{-# INLINE char #-}
-char = signed decimal
-
-uchar :: Parser Word8
-{-# INLINE uchar #-}
-uchar = decimal
-
-int16 :: Parser Int16
-{-# INLINE int16 #-}
-int16 = signed decimal
-
-uint16 :: Parser Word16
-{-# INLINE uint16 #-}
-uint16 = decimal
-
-int :: Parser Int
-{-# INLINE int #-}
-int = signed decimal
-
-uint :: Parser Word32
-{-# INLINE uint #-}
-uint = decimal
-
-float :: Parser Float
-{-# INLINE float #-}
-float = realToFrac <$> double
-
--- double implemented by attoparsec already
 
 -- * Utility parsers and functions
 skipComments :: Parser ()
@@ -242,21 +212,22 @@ skipElementData :: Element -> Parser ()
 skipElementData e = count (elNum e) (skipComments *> takeLine) *> pure ()
 
 takeLine :: Parser B.ByteString
+{-# INLINE takeLine #-}
 takeLine = takeTill $ isEndOfLine . c2w
 
 c2w :: Char -> Word8
-c2w = fromIntegral . ord
 {-# INLINE c2w #-}
+c2w = fromIntegral . ord
 
 -- | Extract an Int from the Scalar types. Return 0 if float or double.
 scalarInt :: Scalar -> Int
 {-# INLINE scalarInt #-}
-scalarInt !(CharS n)   = fromIntegral n
-scalarInt !(UcharS n)  = fromIntegral n
-scalarInt !(ShortS n)  = fromIntegral n
-scalarInt !(UshortS n) = fromIntegral n
-scalarInt !(IntS n)    = n
-scalarInt !(UintS n)   = fromIntegral n
+scalarInt (CharS n)   = fromIntegral n
+scalarInt (UcharS n)  = fromIntegral n
+scalarInt (ShortS n)  = fromIntegral n
+scalarInt (UshortS n) = fromIntegral n
+scalarInt (IntS n)    = n
+scalarInt (UintS n)   = fromIntegral n
 scalarInt _ = 0
 
 foldSelect :: [B.ByteString] -> [Either Property Property] -> Either String [Either Property Property]
