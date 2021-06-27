@@ -80,4 +80,17 @@ propertySpec = do
       it "property float64 x" $
         ("property float64 x" :: B.ByteString) ~> property `shouldParse` ScalarProperty DoubleT "x"
     describe "ScalarProperty" $ do
-      it "" $ pending
+      it "property list char char x" $
+        ("property list char char x" :: B.ByteString) ~> property `shouldParse`
+        ListProperty CharT CharT "x"
+      it "property char x - spaces in between" $
+        ("  property list   char   char   x  " :: B.ByteString) ~> property `shouldParse`
+        ListProperty CharT CharT "x"
+      it "property char x - tabs in between" $
+        ("\tproperty list\tchar\tchar\tx\t" :: B.ByteString) ~> property `shouldParse`
+        ListProperty CharT CharT "x"
+      it "\"property list\" should be treated as keyword - no spaces between words" $
+        property `shouldFailOn` ("property   list char char x" :: B.ByteString)
+      it "\"property list\" should be treated as keyword - no tabs between words" $
+        property `shouldFailOn` ("property\tlist char char x" :: B.ByteString)
+
