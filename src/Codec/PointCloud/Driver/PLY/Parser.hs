@@ -172,34 +172,37 @@ elementData e = count (elNum e) (dataLine (elProps e))
 
 format :: Parser Format
 format = "format" *> skipSpace *> (ascii <|> binaryLE <|> binaryBE)
-  where ascii    = ASCII    <$ "ascii 1.0"
-        binaryLE = BinaryLE <$ "binary_little_endian 1.0"
-        binaryBE = BinaryBE <$ "binary_big_endian 1.0"
+  where ascii    = ASCII    <$ ("ascii" *> skipSpace *> "1.0")
+        binaryLE = BinaryLE <$ ("binary_little_endian" *> skipSpace *> " 1.0")
+        binaryBE = BinaryBE <$ ("binary_big_endian" *> skipSpace *> " 1.0")
 
 element :: Parser Element
-element = Element <$> (skipSpace *> "element " *> takeTill isSpace)
-                  <*> (skipSpace *> (signed decimal) <* skipSpace)
-                  <*> (many' property)
+element = Element <$> (skipSpace *> "element" *> skipSpace *> takeTill isSpace)
+                  <*> (skipSpace *> decimal <* skipSpace)
+                  <*> (many1 property)
 
 property :: Parser Property
 property = skipComments *> (scalarProperty <|> listProperty)
-  where scalarProperty = ScalarProperty <$> (skipSpace *> "property " *> scalarType) <*> takeLine
-        listProperty = ListProperty <$>
-                       ("property list " *> scalarType) <*>
-                       (skipSpace *> scalarType <* skipSpace) <*>
-                       takeLine
+  where
+    property' = skipSpace *> "property" <* skipSpace
+    propertyL' = skipSpace *> "property list" <* skipSpace
+    scalarType' = scalarType <* skipSpace
+    name' = takeToken <* skipSpace
+    scalarProperty = ScalarProperty <$> (property' *> scalarType') <*> name'
+    listProperty = ListProperty <$> (propertyL' *> scalarType') <*> scalarType' <*> name'
+    
 
 -- * Scalar types parser
 scalarType :: Parser ScalarType
 scalarType = choice $
-             [ CharT   <$ ("char "   <|> "int8 ")
-             , UcharT  <$ ("uchar "  <|> "uint8 ")
-             , ShortT  <$ ("short "  <|> "int16 ")
-             , UshortT <$ ("ushort " <|> "uint16 ")
-             , IntT    <$ ("int "    <|> "int32 ")
-             , UintT   <$ ("uint "   <|> "uint32 ")
-             , FloatT  <$ ("float "  <|> "float32 ")
-             , DoubleT <$ ("double " <|> "float64 ") ]
+             [ CharT   <$ ("char"   <|> "int8")
+             , UcharT  <$ ("uchar"  <|> "uint8")
+             , ShortT  <$ ("short"  <|> "int16")
+             , UshortT <$ ("ushort" <|> "uint16")
+             , IntT    <$ ("int"    <|> "int32")
+             , UintT   <$ ("uint"   <|> "uint32")
+             , FloatT  <$ ("float"  <|> "float32")
+             , DoubleT <$ ("double" <|> "float64") ]
 
 
 dataLine :: [Property] -> Parser DataLine
@@ -250,6 +253,10 @@ skipElementData e = count (elNum e) (skipComments *> takeLine) *> pure ()
 takeLine :: Parser B.ByteString
 {-# INLINE takeLine #-}
 takeLine = takeTill $ isEndOfLine . c2w
+
+takeToken :: Parser B.ByteString
+{-# INLINE takeToken #-}
+takeToken = Data.Attoparsec.ByteString.Char8.takeWhile (not . isSpace)
 
 c2w :: Char -> Word8
 {-# INLINE c2w #-}
