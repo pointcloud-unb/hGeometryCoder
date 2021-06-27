@@ -77,6 +77,7 @@ filteredPLY searchElement = do
   !dataBlocks <- join <$> (forM (hElems parsedHeader) $ takeDataBlockByElement searchElement)
   return $ PLY parsedHeader dataBlocks
 
+-- Low level parsers -- 
 
 takeDataBlockByElement :: Element -> Element -> Parser DataBlocks
 {-# INLINE takeDataBlockByElement #-}
@@ -127,60 +128,6 @@ propertyDataByNameScalars (Right (ScalarProperty propType _)) =
     !x <- scalar propType <* skipSpace
     return $ Just x
 
-
-
-
-
-s1 = Element "vertex" 0
-     [ (ScalarProperty CharT "x")
-     , (ScalarProperty CharT "y")
-     , (ScalarProperty CharT "z")
-     ]
-
-s2 = Element "vertex" 0
-     [ (ScalarProperty CharT "z")
-     , (ScalarProperty CharT "y")
-     , (ScalarProperty CharT "x")
-     ]
-
-s3 = Element "vertex" 0
-     [ (ScalarProperty CharT "x")
-     , (ScalarProperty CharT "red")
-     , (ScalarProperty CharT "blue")
-     ]
-
-s4 = Element "face" 0
-     [(ListProperty CharT CharT "vertex_index")]
-
-s5 = Element "faces" 0
-     [(ListProperty CharT CharT "vertex_index")]
-
-s6 = Element "face" 0
-     [(ListProperty CharT CharT "face_index")]
-
-
-pHeader = fromRight undefined $ parseOnly header simple2
-el1 = head . hElems $ pHeader 
-el2 = head . drop 1 . hElems $ pHeader
-
-simple2 :: B.ByteString
-simple2 = "ply\nformat ascii 1.0\ncomment author: Greg Turk\ncomment object: another cube\nelement vertex 8\nproperty float x\nproperty float y\nproperty float z\nproperty uchar red\nproperty uchar green\nproperty uchar blue\nelement face 7\nproperty list uchar int vertex_index\nelement edge 5\nproperty int vertex1\nproperty int vertex2\nproperty uchar red\nproperty uchar green\nproperty uchar blue\nend_header\n0 0 0 255 0 0\n0 0 1 255 0 0\n0 1 1 255 0 0\n0 1 0 255 0 0\n1 0 0 0 0 255\n1 0 1 0 0 255\n1 1 1 0 0 255\n1 1 0 0 0 255\n3 0 1 2\n3 0 2 3\n4 7 6 5 4\n4 0 4 5 1\n4 1 5 6 2\n4 2 6 7 3\n4 3 7 4 0\n0 1 255 255 255\n1 2 255 255 255\n2 3 255 255 255\n3 0 255 255 255\n2 0 0 0 0\n"
-
-simple2payload :: B.ByteString
-simple2payload = "0 0 0 255 0 0\n0 0 1 255 0 0\n0 1 1 255 0 0\n0 1 0 255 0 0\n1 0 0 0 0 255\n1 0 1 0 0 255\n1 1 1 0 0 255\n1 1 0 0 0 255\n3 0 1 2\n3 0 2 3\n4 7 6 5 4\n4 0 4 5 1\n4 1 5 6 2\n4 2 6 7 3\n4 3 7 4 0\n0 1 255 255 255\n1 2 255 255 255\n2 3 255 255 255\n3 0 255 255 255\n2 0 0 0 0\n"
-
-payload1 :: B.ByteString
-payload1 = "0 0 0 255 0 0\n0 0 1 255 0 0\n0 1 1 255 0 0\n0 1 0 255 0 0\n1 0 0 0 0 255\n1 0 1 0 0 255\n1 1 1 0 0 255\n1 1 0 0 0 255\n"
-
-payload2 :: B.ByteString
-payload2 = "3 0 1 2\n3 0 2 3\n4 7 6 5 4\n4 0 4 5 1\n4 1 5 6 2\n4 2 6 7 3\n4 3 7 4 0\n"
-
-payload3 :: B.ByteString
-payload3 = "0 1 255 255 255\n1 2 255 255 255\n2 3 255 255 255\n3 0 255 255 255\n2 0 0 0 0\n"
-
-
-
--- Low level parsers -- 
 
 elementData :: Element -> Parser [DataLine]
 {-# INLINE elementData #-}
