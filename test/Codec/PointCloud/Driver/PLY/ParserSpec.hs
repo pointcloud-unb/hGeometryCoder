@@ -43,6 +43,41 @@ formatSpec = do
 propertySpec = do
   describe "property" $ do
     describe "ScalarProperty" $ do
-      it "" $ pending
+      it "property char x" $
+        ("property char x" :: B.ByteString) ~> property `shouldParse` ScalarProperty CharT "x"
+      it "property char x - spaces in between" $
+        ("  property   char   x  " :: B.ByteString) ~> property `shouldParse` ScalarProperty CharT "x"
+      it "property char x - tabs in between" $
+        ("\tproperty\t char\t x\t" :: B.ByteString) ~> property `shouldParse` ScalarProperty CharT "x"
+      it "property int8 x" $
+        ("property int8 x" :: B.ByteString) ~> property `shouldParse` ScalarProperty CharT "x"
+      it "property uchar x" $
+        ("property uchar x" :: B.ByteString) ~> property `shouldParse` ScalarProperty UcharT "x"
+      it "property uint8 x" $
+        ("property uint8 x" :: B.ByteString) ~> property `shouldParse` ScalarProperty UcharT "x"
+      it "property short x" $
+        ("property short x" :: B.ByteString) ~> property `shouldParse` ScalarProperty ShortT "x"
+      it "property int16 x" $
+        ("property int16 x" :: B.ByteString) ~> property `shouldParse` ScalarProperty ShortT "x"
+      it "property ushort x" $
+        ("property ushort x" :: B.ByteString) ~> property `shouldParse` ScalarProperty UshortT "x"
+      it "property uint16 x" $
+        ("property uint16 x" :: B.ByteString) ~> property `shouldParse` ScalarProperty UshortT "x"
+      it "property int x" $
+        ("property int x" :: B.ByteString) ~> property `shouldParse` ScalarProperty IntT "x"
+      it "property int32 x" $
+        ("property int32 x" :: B.ByteString) ~> property `shouldParse` ScalarProperty IntT "x"
+      it "property uint x" $
+        ("property uint x" :: B.ByteString) ~> property `shouldParse` ScalarProperty UintT "x"
+      it "property uint32 x" $
+        ("property uint32 x" :: B.ByteString) ~> property `shouldParse` ScalarProperty UintT "x"
+      it "property float x" $
+        ("property float x" :: B.ByteString) ~> property `shouldParse` ScalarProperty FloatT "x"
+      it "property float32 x" $
+        ("property float32 x" :: B.ByteString) ~> property `shouldParse` ScalarProperty FloatT "x"
+      it "property double x" $
+        ("property double x" :: B.ByteString) ~> property `shouldParse` ScalarProperty DoubleT "x"
+      it "property float64 x" $
+        ("property float64 x" :: B.ByteString) ~> property `shouldParse` ScalarProperty DoubleT "x"
     describe "ScalarProperty" $ do
       it "" $ pending

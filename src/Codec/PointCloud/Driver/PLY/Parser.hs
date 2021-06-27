@@ -185,15 +185,24 @@ property = skipComments *> (scalarProperty <|> listProperty)
 
 -- * Scalar types parser
 scalarType :: Parser ScalarType
-scalarType = choice $
-             [ CharT   <$ ("char"   <|> "int8")
-             , UcharT  <$ ("uchar"  <|> "uint8")
-             , ShortT  <$ ("short"  <|> "int16")
-             , UshortT <$ ("ushort" <|> "uint16")
-             , IntT    <$ ("int"    <|> "int32")
-             , UintT   <$ ("uint"   <|> "uint32")
-             , FloatT  <$ ("float"  <|> "float32")
-             , DoubleT <$ ("double" <|> "float64") ]
+scalarType = choice $               -- Sensitive to the order of the list... 
+             [ FloatT  <$ "float32" -- Try floats first, seems to be prefered 
+             , DoubleT <$ "float64" -- real world PLY files... 
+             , DoubleT <$ "double"
+             , FloatT  <$ "float"   -- catch all: should come after other floats.
+             , CharT   <$ "int8"
+             , ShortT  <$ "int16"
+             , IntT    <$ "int32"
+             , IntT    <$ "int"     -- should come after other ints.
+             , CharT   <$ "char"
+             , ShortT  <$ "short"
+             , UcharT  <$ "uchar"
+             , UshortT <$ "ushort"
+             , UcharT  <$ "uint8"
+             , UshortT <$ "uint16"
+             , UintT   <$ "uint32"
+             , UintT   <$ "uint"    -- should come after other uints. 
+             ]
 
 
 dataLine :: [Property] -> Parser DataLine
