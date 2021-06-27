@@ -1,15 +1,6 @@
 {-# LANGUAGE OverloadedStrings, BangPatterns #-}
 
-module Codec.PointCloud.Driver.PLY.Parser
-  ( parsePLY
-  , parseVertexPLY
-  , parsePointCloud
-  , readPLY
-  , unflatPLY
-  , readFlatPLY
-  , elementData
-  , header
-  ) where
+module Codec.PointCloud.Driver.PLY.Parser where
 
 import Codec.PointCloud.Driver.PLY.Types
 import Codec.PointCloud.Types.Voxel

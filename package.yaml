@@ -1,10 +1,10 @@
-name:                hGeometryCoder
-version:             0.1.0.0
-github:              "pointcloud-unb/hGeometryCoder"
-license:             BSD3
-author:              "Edil Medeiros"
-maintainer:          "email@email.com"
-copyright:           "2021 Edil Medeiros"
+name:             hGeometryCoder
+version:       0.1.0.0
+github:         "pointcloud-unb/hGeometryCoder"
+license:       BSD3
+author:         "Edil Medeiros"
+maintainer: "email@email.com"
+copyright:   "2021 Edil Medeiros"
 
 extra-source-files:
 - README.md
@@ -22,7 +22,6 @@ description:         Please see the README on GitHub at <https://github.com/poin
 dependencies:
 - base >= 4.7 && < 5
 - bytestring
-- bytestring-lexing
 - containers
 - attoparsec
 - vector
@@ -30,7 +29,6 @@ dependencies:
 - matrix
 - deepseq
 - flat
-- hspec
 
 library:
   source-dirs: src
@@ -48,16 +46,18 @@ executables:
     - hGeometryCoder
 
 tests:
-  pc2PLY-test:
-    main:                pc2PLY_test.hs
-    source-dirs:         test
+  spec: 
+    main: Spec.hs
+    source-dirs: test
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
     - hGeometryCoder
-
+    - hspec
+    - hspec-attoparsec
+    
 benchmarks:
   parser-bench:
     main: Bench.hs

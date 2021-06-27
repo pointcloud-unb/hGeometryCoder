@@ -5,8 +5,9 @@ import CLI
 import Codec.PointCloud.Utils
 import Codec.PointCloud.Compression.Dyadic
 import Codec.PointCloud.Compression.PLY (pc2PLY)
-import Codec.PointCloud.Driver.PLY.Parser (parsePLY, parseVertexPLY)
-import Codec.PointCloud.Driver.PLY.Output (writePLY)
+--import Codec.PointCloud.Driver.PLY.Parser (parsePLY, parseVertexPLY)
+--import Codec.PointCloud.Driver.PLY.Output (writePLY)
+import Codec.PointCloud.Driver.PLY (parsePLY, parseVertexPLY, writePLY)
 
 import Codec.PointCloud.Driver.EDX.Bitstream
 import qualified Data.ByteString as B (readFile, writeFile, pack)

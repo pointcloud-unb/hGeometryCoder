@@ -4,9 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
-
--- hash: dad7286a31f9e8107959bd81a456bca5cdf8acce811c0969b4a8611c8bd333b9
-
+-- hash: ce1f716bc9d09303562fae72241b8f5c7df65560f3a9a6d337618c832281e8a0
 
 name:           hGeometryCoder
 version:        0.1.0.0
@@ -33,6 +31,7 @@ library
       Codec.PointCloud.Compression.PLY
       Codec.PointCloud.Driver.EDX.Bitstream
       Codec.PointCloud.Driver.EDX.Types
+      Codec.PointCloud.Driver.PLY
       Codec.PointCloud.Driver.PLY.Output
       Codec.PointCloud.Driver.PLY.Parser
       Codec.PointCloud.Driver.PLY.Types
@@ -51,11 +50,9 @@ library
       attoparsec
     , base >=4.7 && <5
     , bytestring
-    , bytestring-lexing
     , containers
     , deepseq
     , flat
-    , hspec
     , matrix
     , text
     , vector
@@ -73,21 +70,20 @@ executable hGeometryCoder
       attoparsec
     , base >=4.7 && <5
     , bytestring
-    , bytestring-lexing
     , containers
     , deepseq
     , flat
     , hGeometryCoder
-    , hspec
     , matrix
     , text
     , vector
   default-language: Haskell2010
 
-test-suite pc2PLY-test
+test-suite spec
   type: exitcode-stdio-1.0
-  main-is: pc2PLY_test.hs
+  main-is: Spec.hs
   other-modules:
+      Codec.PointCloud.Driver.PLY.ParserSpec
       Paths_hGeometryCoder
   hs-source-dirs:
       test
@@ -96,12 +92,12 @@ test-suite pc2PLY-test
       attoparsec
     , base >=4.7 && <5
     , bytestring
-    , bytestring-lexing
     , containers
     , deepseq
     , flat
     , hGeometryCoder
     , hspec
+    , hspec-attoparsec
     , matrix
     , text
     , vector
@@ -119,13 +115,11 @@ benchmark parser-bench
       attoparsec
     , base >=4.7 && <5
     , bytestring
-    , bytestring-lexing
     , containers
     , criterion
     , deepseq
     , flat
     , hGeometryCoder
-    , hspec
     , matrix
     , text
     , vector
