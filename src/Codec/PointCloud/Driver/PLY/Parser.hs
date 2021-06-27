@@ -2,8 +2,8 @@
 
 module Codec.PointCloud.Driver.PLY.Parser
   ( parsePLY
-  , parsePLY'
-  , parsePLYV
+  , parseVertexPLY
+  , parsePointCloud
   , readPLY
   , unflatPLY
   , readFlatPLY
@@ -12,36 +12,43 @@ module Codec.PointCloud.Driver.PLY.Parser
   ) where
 
 import Codec.PointCloud.Driver.PLY.Types
+import Codec.PointCloud.Types.Voxel
+import qualified Codec.PointCloud.Types.PointCloud as PC (PointCloud, fromList)
 
 import Flat
 import Control.Applicative
-import Control.Monad (join, forM, replicateM)
+import Control.Monad (join, forM, replicateM, (<$!>))
 import Data.Char (ord)
-import Data.Attoparsec.ByteString.Char8 hiding (char)
-import qualified Data.ByteString.Char8 as B (ByteString, pack, readFile, drop) 
+import Data.Attoparsec.ByteString.Char8 hiding (char, take)
 import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
-import Data.Foldable
+import Data.Either
+import Data.Maybe (catMaybes)
 
-import qualified Data.Sequence as S
-import qualified Data.Vector as V
-
+import qualified Data.ByteString.Char8 as B
 
 
 parsePLY :: B.ByteString -> Either String PLY
 parsePLY = parseOnly (ply <* endOfInput) 
 
--- parsePLYHeader1 :: B.ByteString -> Either String Header
--- parsePLYHeader1 = parseOnly header
 
--- PLY using Sequence for benchmarking --
-parsePLY' :: B.ByteString -> Either String PLY'
-parsePLY' = parseOnly (ply' <* endOfInput) 
+parseVertexPLY :: B.ByteString -> Either String PLY
+parseVertexPLY = parseOnly (filteredPLY vertex <* endOfInput)
+  where
+    vertex = Element "vertex" 0
+             [ (ScalarProperty CharT "x")
+             , (ScalarProperty CharT "y")
+             , (ScalarProperty CharT "z")
+             ]
 
-
--- PLY using Vector for benchmarking --
-parsePLYV :: B.ByteString -> Either String PLYV
-parsePLYV = parseOnly (plyV <* endOfInput) 
+parsePointCloud :: B.ByteString -> Either String PC.PointCloud
+parsePointCloud = parseOnly (filteredPLY' vertex <* endOfInput)
+  where
+    vertex = Element "vertex" 0
+             [ (ScalarProperty CharT "x")
+             , (ScalarProperty CharT "y")
+             , (ScalarProperty CharT "z")
+             ]
 
 
 
@@ -62,7 +69,7 @@ readFlatPLY file = unflatPLY <$> B.readFile file
 -- | Parse the PLY header
 header :: Parser Header
 header = Header <$> preamble <*> elements <* "end_header" <* endOfLine
-  where preamble = ("ply" <|> "PLY") *> endOfLine *> format <* skipSpace
+  where preamble = ("ply" *> endOfLine) *> format <* skipSpace
         elements = many1 (skipComments *> element <* skipSpace)
 
 ply :: Parser PLY
@@ -71,69 +78,131 @@ ply = do
   !dataBlocks <- join <$> forM (hElems parsedHeader) elementData
   return $! PLY parsedHeader dataBlocks
 
-ply' :: Parser PLY'
-ply' = do
-  !parsedHeader <- header
-  !dataBlocks <- join <$> forM (S.fromList $ hElems parsedHeader) elementData'
-  return $! PLY' parsedHeader dataBlocks
 
-plyV :: Parser PLYV
-plyV = do
+filteredPLY :: Element -> Parser PLY
+{-# INLINE filteredPLY #-}
+filteredPLY searchElement = do
   !parsedHeader <- header
-  !dataBlocks <- join <$> forM (V.fromList $ hElems parsedHeader) elementDataV
-  return $! PLYV parsedHeader dataBlocks
+  !dataBlocks <- join <$> (forM (hElems parsedHeader) $ takeDataBlockByElement searchElement)
+  return $ PLY parsedHeader dataBlocks
 
+filteredPLY' :: Element -> Parser PC.PointCloud
+{-# INLINE filteredPLY' #-}
+filteredPLY' searchElement = do
+  !parsedHeader <- header
+  PC.fromList . catMaybes . join <$> forM (hElems parsedHeader) (takeDataBlockByElement' searchElement)
+  
 
 
 -- Low level parsers -- 
 
+takeDataBlockByElement :: Element -> Element -> Parser DataBlocks
+{-# INLINE takeDataBlockByElement #-}
+takeDataBlockByElement (Element searchName _ searchProps) (Element name num props) =
+  if name /= searchName
+  then count num skipLine *> return []
+  else let !ps = fromRight undefined $ foldSelect (propName <$> searchProps) (Left <$> props)
+       in
+         if allScalars searchProps props
+         then count num (filteredDataLineScalars ps)
+         else count num (filteredDataLine ps)
+
+takeDataBlockByElement' :: Element -> Element -> Parser [Maybe Voxel]
+{-# INLINE takeDataBlockByElement' #-}
+takeDataBlockByElement' (Element searchName _ searchProps) (Element name num props) =
+  if name /= searchName
+  then count num skipLine *> return []
+  else let !ps = fromRight undefined $ foldSelect (propName <$> searchProps) (Left <$> props)
+       in
+         if allScalars searchProps props
+         then count num (filteredDataLine' ps)
+         else count num (filteredDataLine' ps)
+
+
+
+filteredDataLine :: [Either Property Property] -> Parser DataLine
+{-# INLINE filteredDataLine #-}
+filteredDataLine ps = concat <$> traverse propertyDataByName ps
+
+filteredDataLine' :: [Either Property Property] -> Parser (Maybe Voxel)
+{-# INLINE filteredDataLine' #-}
+filteredDataLine' ps = mkVoxel . concat <$> traverse propertyDataByName ps
+  where
+    mkVoxel (s1:s2:s3:_) = Just $ Voxel (scalarInt s1) (scalarInt s2) (scalarInt s3)
+    mkVoxel _ = Nothing
+                      
+propertyDataByName :: Either Property Property -> Parser [Scalar]
+{-# INLINE propertyDataByName #-}
+propertyDataByName (Left (ScalarProperty _ _)) =
+  skipScalar *> return []
+propertyDataByName (Right (ScalarProperty propType _)) =
+  do
+    !x <- scalar propType <* skipSpace
+    return [x]
+propertyDataByName (Left (ListProperty indexType _ _)) =
+  do
+    !x <- scalar indexType <* skipSpace
+    let !c = scalarInt x
+    count c (skipScalar <* skipSpace) *> return []
+propertyDataByName (Right (ListProperty indexType propType _)) =
+  do
+    !x <- scalar indexType <* skipSpace
+    let !c = scalarInt x
+    count c (scalar propType <* skipSpace)
+
+filteredDataLineScalars :: [Either Property Property] -> Parser DataLine
+{-# INLINE filteredDataLineScalars #-}
+filteredDataLineScalars ps = catMaybes <$> traverse propertyDataByNameScalars ps
+
+
+propertyDataByNameScalars :: Either Property Property -> Parser (Maybe Scalar)
+{-# INLINE propertyDataByNameScalars #-}
+propertyDataByNameScalars (Left (ScalarProperty _ _)) =
+  skipScalar *> return Nothing
+propertyDataByNameScalars (Right (ScalarProperty propType _)) =
+  do
+    !x <- scalar propType <* skipSpace
+    return $ Just x
+
+
 elementData :: Element -> Parser [DataLine]
 {-# INLINE elementData #-}
-elementData e = count (elNum e)
-                  (skipComments *> dataLine (elProps e))
-
-
-elementData' :: Element -> Parser DataBlocks'
-{-# INLINE elementData' #-}
-elementData' e = S.replicateM (elNum e) (skipComments *> dataLine' (elProps e))
-
-elementDataV :: Element -> Parser DataBlocksV
-{-# INLINE elementDataV #-}
-elementDataV e = V.replicateM (elNum e) (skipComments *> dataLineV (elProps e))
-
+elementData e = count (elNum e) (dataLine (elProps e))
 
 
 format :: Parser Format
 format = "format" *> skipSpace *> (ascii <|> binaryLE <|> binaryBE)
-  where ascii    = ASCII    <$ "ascii 1.0"
-        binaryLE = BinaryLE <$ "binary_little_endian 1.0"
-        binaryBE = BinaryBE <$ "binary_big_endian 1.0"
+  where ascii    = ASCII    <$ ("ascii" *> skipSpace *> "1.0")
+        binaryLE = BinaryLE <$ ("binary_little_endian" *> skipSpace *> " 1.0")
+        binaryBE = BinaryBE <$ ("binary_big_endian" *> skipSpace *> " 1.0")
 
 element :: Parser Element
-element = Element <$> (skipSpace *> "element " *> takeTill isSpace)
-                  <*> (skipSpace *> int <* skipSpace)
-                  <*> (many' property)
+element = Element <$> (skipSpace *> "element" *> skipSpace *> takeTill isSpace)
+                  <*> (skipSpace *> decimal <* skipSpace)
+                  <*> (many1 property)
 
 property :: Parser Property
 property = skipComments *> (scalarProperty <|> listProperty)
-  where scalarProperty = ScalarProperty <$> (skipSpace *> "property " *> scalarType) <*> takeLine
-        listProperty = ListProperty <$>
-                       ("property list " *> scalarType) <*>
-                       (skipSpace *> scalarType <* skipSpace) <*>
-                       takeLine
+  where
+    property' = skipSpace *> "property" <* skipSpace
+    propertyL' = skipSpace *> "property list" <* skipSpace
+    scalarType' = scalarType <* skipSpace
+    name' = takeToken <* skipSpace
+    scalarProperty = ScalarProperty <$> (property' *> scalarType') <*> name'
+    listProperty = ListProperty <$> (propertyL' *> scalarType') <*> scalarType' <*> name'
+    
 
 -- * Scalar types parser
 scalarType :: Parser ScalarType
 scalarType = choice $
-             [ CharT   <$ ("char "   <|> "int8 ")
-             , UcharT  <$ ("uchar "  <|> "uint8 ")
-             , ShortT  <$ ("short "  <|> "int16 ")
-             , UshortT <$ ("ushort " <|> "uint16 ")
-             , IntT    <$ ("int "    <|> "int32 ")
-             , UintT   <$ ("uint "   <|> "uint32 ")
-             , FloatT  <$ ("float "  <|> "float32 ")
-             , DoubleT <$ ("double " <|> "float64 ") ]
-
+             [ CharT   <$ ("char"   <|> "int8")
+             , UcharT  <$ ("uchar"  <|> "uint8")
+             , ShortT  <$ ("short"  <|> "int16")
+             , UshortT <$ ("ushort" <|> "uint16")
+             , IntT    <$ ("int"    <|> "int32")
+             , UintT   <$ ("uint"   <|> "uint32")
+             , FloatT  <$ ("float"  <|> "float32")
+             , DoubleT <$ ("double" <|> "float64") ]
 
 
 dataLine :: [Property] -> Parser DataLine
@@ -152,105 +221,95 @@ propertyData (ListProperty indexType propType _) = do
   replicateM c (scalar propType <* skipSpace)
 
 
-dataLine' :: [Property] -> Parser DataLine'
-{-# INLINE dataLine' #-}
-dataLine' ps = fold <$> traverse propertyData' ps
-
-
-propertyData' :: Property -> Parser (S.Seq Scalar)
-{-# INLINE propertyData' #-}
-propertyData' (ScalarProperty propType _) = do
-  !x <- scalar propType <* skipSpace
-  return $ S.singleton x
-propertyData' (ListProperty indexType propType _) = do
-  !x <- scalar indexType <* skipSpace
-  let !c = scalarInt x
-  S.replicateM c (scalar propType <* skipSpace)
-
-
-
-dataLineV :: [Property] -> Parser DataLineV
-{-# INLINE dataLineV #-}
-dataLineV ps = V.concat <$> traverse propertyDataV ps
-
-
-propertyDataV :: Property -> Parser (V.Vector Scalar)
-{-# INLINE propertyDataV #-}
-propertyDataV (ScalarProperty propType _) = do
-  !x <- scalar propType <* skipSpace
-  return $ V.singleton x
-propertyDataV (ListProperty indexType propType _) = do
-  !x <- scalar indexType <* skipSpace
-  let !c = scalarInt x
-  V.replicateM c (scalar propType <* skipSpace)
-  
-
-
--- | Extract an Int from the Scalar types. Return 0 if float or double.
-scalarInt :: Scalar -> Int
-{-# INLINE scalarInt #-}
-scalarInt !(CharS n)   = fromIntegral n
-scalarInt !(UcharS n)  = fromIntegral n
-scalarInt !(ShortS n)  = fromIntegral n
-scalarInt !(UshortS n) = fromIntegral n
-scalarInt !(IntS n)    = n
-scalarInt !(UintS n)   = fromIntegral n
-scalarInt _ = 0
-
 -- * Scalar parser
 scalar :: ScalarType -> Parser Scalar
 {-# INLINE scalar #-}
-scalar !CharT   = CharS   <$> char
-scalar !UcharT  = UcharS  <$> uchar
-scalar !ShortT  = ShortS  <$> int16
-scalar !UshortT = UshortS <$> uint16
-scalar !IntT    = IntS    <$> int
-scalar !UintT   = UintS   <$> uint
-scalar !FloatT  = FloatS  <$> float
-scalar !DoubleT = DoubleS <$> double
+scalar CharT   = CharS   <$!> signed decimal
+scalar UcharT  = UcharS  <$!> decimal
+scalar ShortT  = ShortS  <$!> signed decimal
+scalar UshortT = UshortS <$!> decimal
+scalar IntT    = IntS    <$!> signed decimal
+scalar UintT   = UintS   <$!> decimal
+scalar FloatT  = FloatS  <$!> (realToFrac <$> double)
+scalar DoubleT = DoubleS <$!> double
 
--- * Numeric parsers
-char :: Parser Int8
-{-# INLINE char #-}
-char = signed decimal
 
-uchar :: Parser Word8
-{-# INLINE uchar #-}
-uchar = decimal
-
-int16 :: Parser Int16
-{-# INLINE int16 #-}
-int16 = signed decimal
-
-uint16 :: Parser Word16
-{-# INLINE uint16 #-}
-uint16 = decimal
-
-int :: Parser Int
-{-# INLINE int #-}
-int = signed decimal
-
-uint :: Parser Word32
-{-# INLINE uint #-}
-uint = decimal
-
-float :: Parser Float
-{-# INLINE float #-}
-float = realToFrac <$> double
-
--- double implemented by attoparsec already
-
--- * Utility parsers
+-- * Utility parsers and functions
 skipComments :: Parser ()
-skipComments = skipSpace *> ("comment " *> takeLine *> skipComments) <|> pure ()
+{-# INLINE skipComments #-}
+skipComments = skipSpace *> ("comment" *> takeLine *> skipComments) <|> pure ()
+
+skipLine :: Parser ()
+{-# INLINE skipLine #-}
+skipLine = (skipWhile $ not . isEndOfLine . c2w) <* skipSpace
+
+skipScalar :: Parser ()
+{-# INLINE skipScalar #-}
+skipScalar = (skipWhile $ not . isSpace) <* skipSpace
 
 skipElementData :: Element -> Parser ()
 skipElementData e = count (elNum e) (skipComments *> takeLine) *> pure ()
 
 takeLine :: Parser B.ByteString
+{-# INLINE takeLine #-}
 takeLine = takeTill $ isEndOfLine . c2w
 
-c2w :: Char -> Word8
-c2w = fromIntegral . ord
-{-# INLINE c2w #-}
+takeToken :: Parser B.ByteString
+{-# INLINE takeToken #-}
+takeToken = Data.Attoparsec.ByteString.Char8.takeWhile (not . isSpace)
 
+c2w :: Char -> Word8
+{-# INLINE c2w #-}
+c2w = fromIntegral . ord
+
+-- | Extract an Int from the Scalar types. Rounds if float or double.
+scalarInt :: Scalar -> Int
+{-# INLINE scalarInt #-}
+scalarInt (CharS n)   = fromIntegral n
+scalarInt (UcharS n)  = fromIntegral n
+scalarInt (ShortS n)  = fromIntegral n
+scalarInt (UshortS n) = fromIntegral n
+scalarInt (IntS n)    = n
+scalarInt (UintS n)   = fromIntegral n
+scalarInt (FloatS n)  = round n
+scalarInt (DoubleS n) = round n
+
+
+foldSelect :: [B.ByteString] -> [Either Property Property] -> Either String [Either Property Property]
+foldSelect [] ps = Right ps
+foldSelect (n:ns) ps = do
+  ps' <- select n ps
+  foldSelect ns ps'
+ 
+select :: B.ByteString -> [Either Property Property] -> Either String [Either Property Property]
+select name ps = if switched
+                 then Right $ p'
+                 else Left $ "Property " <> B.unpack name <> " not found..."
+  where
+    f p = if (propName' p == name)
+          then (switchEither p, True)
+          else (p, False)
+    (p', bs) = unzip . fmap f $  ps
+    switched = or bs
+
+propName' :: Either Property Property -> B.ByteString
+propName' = either propName propName
+
+propName :: Property -> B.ByteString
+propName (ScalarProperty _ name) = name
+propName (ListProperty _ _ name) = name
+ 
+switchEither :: Either a a -> Either a a
+switchEither = either Right Right
+
+isScalarProperty :: Property -> Bool
+{-# INLINE isScalarProperty #-}
+isScalarProperty (ScalarProperty _ _) = True
+isScalarProperty _ = False
+
+allScalars :: [Property] -> [Property] -> Bool
+{-# INLINE allScalars #-}
+allScalars searchProps props = p && s
+  where
+    s = and $ isScalarProperty <$> searchProps
+    p = and $ isScalarProperty <$> props

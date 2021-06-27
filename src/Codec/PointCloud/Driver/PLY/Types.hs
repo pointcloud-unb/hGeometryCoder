@@ -10,10 +10,6 @@ import Data.ByteString (ByteString)
 import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
 
-import qualified Data.Sequence as S
-import qualified Data.Vector as V
-
-
 
 -- PLY representation --
 data PLY = PLY { plyHeader :: !Header
@@ -22,23 +18,6 @@ data PLY = PLY { plyHeader :: !Header
 
 type DataBlocks = [DataLine]
 type DataLine = [Scalar]
-
--- PLY using Sequence -- 
-data PLY' = PLY' { plyHeader' :: !Header
-                 , plyData'   :: DataBlocks' }
-  deriving (Show, Generic, NFData, Eq)
-
-type DataBlocks' = S.Seq DataLine'
-type DataLine' = S.Seq Scalar
-
--- PLY using Vector -- 
-data PLYV = PLYV { plyHeaderV :: !Header
-                 , plyDataV   :: DataBlocksV }
-  deriving (Show, Generic, NFData, Eq)
-
-type DataBlocksV = V.Vector DataLineV
-type DataLineV = V.Vector Scalar
-
 
 
 data Header = Header { hFormat :: !Format
@@ -72,12 +51,13 @@ data ScalarType = CharT
                 | DoubleT
                 deriving (Eq, Show, Generic, Flat, NFData)
 
-data Scalar = CharS   !Int8
-            | UcharS  !Word8
-            | ShortS  !Int16
-            | UshortS !Word16
-            | IntS    !Int
-            | UintS   !Word32
-            | FloatS  !Float
-            | DoubleS !Double
-            deriving (Show, Generic, Flat, NFData, Eq)
+data Scalar = CharS   {-# UNPACK #-} !Int8
+            | UcharS  {-# UNPACK #-} !Word8
+            | ShortS  {-# UNPACK #-} !Int16
+            | UshortS {-# UNPACK #-} !Word16
+            | IntS    {-# UNPACK #-} !Int
+            | UintS   {-# UNPACK #-} !Word32
+            | FloatS  {-# UNPACK #-} !Float
+            | DoubleS {-# UNPACK #-} !Double
+            deriving (Show, Generic, Flat, NFData)
+
