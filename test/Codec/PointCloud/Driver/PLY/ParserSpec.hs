@@ -14,5 +14,24 @@ spec :: Spec
 spec = do
   describe "Parser" $ do
     describe "formatLine" $ do
-      it "Proper ASCII line" $ do
-        ("format ascii 1.0" :: B.ByteString) ~> format `shouldParse` ASCII
+      describe "ASCII" $ do
+        it "Proper line" $
+          ("format ascii 1.0" :: B.ByteString) ~> format `shouldParse` ASCII
+        it "Spaces in the middle of line" $
+          ("format   ascii   1.0   " :: B.ByteString) ~> format `shouldParse` ASCII
+        it "Tabs in the middle of line" $
+          ("format\tascii\t1.0" :: B.ByteString) ~> format `shouldParse` ASCII
+      describe "Little_Endian" $ do
+        it "Proper line" $
+          ("format binary_little_endian 1.0" :: B.ByteString) ~> format `shouldParse` BinaryLE
+        it "Spaces in the middle of line" $
+          ("format   binary_little_endian   1.0   " :: B.ByteString) ~> format `shouldParse` BinaryLE
+        it "Tabs in the middle of line" $
+          ("format\tbinary_little_endian\t1.0" :: B.ByteString) ~> format `shouldParse` BinaryLE
+      describe "Big_Endian" $ do
+        it "Proper line" $
+          ("format binary_big_endian 1.0" :: B.ByteString) ~> format `shouldParse` BinaryBE
+        it "Spaces in the middle of line" $
+          ("format   binary_big_endian   1.0   " :: B.ByteString) ~> format `shouldParse` BinaryBE
+        it "Tabs in the middle of line" $
+          ("format\tbinary_big_endian\t1.0" :: B.ByteString) ~> format `shouldParse` BinaryBE

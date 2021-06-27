@@ -164,8 +164,8 @@ elementData e = count (elNum e) (dataLine (elProps e))
 format :: Parser Format
 format = "format" *> skipSpace *> (ascii <|> binaryLE <|> binaryBE)
   where ascii    = ASCII    <$ ("ascii" *> skipSpace *> "1.0")
-        binaryLE = BinaryLE <$ ("binary_little_endian" *> skipSpace *> " 1.0")
-        binaryBE = BinaryBE <$ ("binary_big_endian" *> skipSpace *> " 1.0")
+        binaryLE = BinaryLE <$ ("binary_little_endian" *> skipSpace *> "1.0")
+        binaryBE = BinaryBE <$ ("binary_big_endian" *> skipSpace *> "1.0")
 
 element :: Parser Element
 element = Element <$> (skipSpace *> "element" *> skipSpace *> takeTill isSpace)
