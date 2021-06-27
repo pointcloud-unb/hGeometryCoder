@@ -22,7 +22,6 @@ import Data.Char (ord)
 import Data.Attoparsec.ByteString.Char8 hiding (char, take)
 import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
-import Data.Foldable
 import Data.Either
 import Data.Maybe (catMaybes)
 
