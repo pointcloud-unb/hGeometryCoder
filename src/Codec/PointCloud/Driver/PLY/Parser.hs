@@ -127,7 +127,7 @@ filteredDataLine ps = concat <$> traverse propertyDataByName ps
 
 filteredDataLine' :: [Either Property Property] -> Parser (Maybe Voxel)
 {-# INLINE filteredDataLine' #-}
-filteredDataLine' ps = mkVoxel <$> concat <$> traverse propertyDataByName ps
+filteredDataLine' ps = mkVoxel . concat <$> traverse propertyDataByName ps
   where
     mkVoxel (s1:s2:s3:_) = Just $ Voxel (scalarInt s1) (scalarInt s2) (scalarInt s3)
     mkVoxel _ = Nothing
