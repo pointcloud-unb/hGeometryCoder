@@ -10,10 +10,6 @@ import Data.ByteString (ByteString)
 import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
 
-import qualified Data.Sequence as S
-import qualified Data.Vector as V
-
-
 
 -- PLY representation --
 data PLY = PLY { plyHeader :: !Header
@@ -22,29 +18,6 @@ data PLY = PLY { plyHeader :: !Header
 
 type DataBlocks = [DataLine]
 type DataLine = [Scalar]
-
-
--- PLY representation --
-data PLY2 = PLY2 { plyHeader2 :: !Header
-                 , plyData2   :: [DataBlocks] }
-  deriving (Show, Generic, Flat, NFData)
-
-
--- PLY using Sequence -- 
-data PLY' = PLY' { plyHeader' :: !Header
-                 , plyData'   :: DataBlocks' }
-  deriving (Show, Generic, NFData)
-
-type DataBlocks' = S.Seq DataLine'
-type DataLine' = S.Seq Scalar
-
--- PLY using Vector -- 
-data PLYV = PLYV { plyHeaderV :: !Header
-                 , plyDataV   :: DataBlocksV }
-  deriving (Show, Generic, NFData)
-
-type DataBlocksV = V.Vector DataLineV
-type DataLineV = V.Vector Scalar
 
 
 

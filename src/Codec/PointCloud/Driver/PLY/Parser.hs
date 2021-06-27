@@ -2,7 +2,6 @@
 
 module Codec.PointCloud.Driver.PLY.Parser
   ( parsePLY
-  , parsePLY'
   , parseVertexPLY
   , readPLY
   , unflatPLY
@@ -26,18 +25,12 @@ import qualified Data.ByteString.Lex.Fractional
 import qualified Data.ByteString.Lex.Integral
 
 import qualified Data.ByteString.Char8 as B
-import qualified Data.Sequence as S
 
-import System.IO.Unsafe (unsafePerformIO)
 import Data.Either
 import Data.Maybe (catMaybes)
 
 parsePLY :: B.ByteString -> Either String PLY
 parsePLY = parseOnly (ply <* endOfInput) 
-
--- PLY using Sequence for benchmarking --
-parsePLY' :: B.ByteString -> Either String PLY'
-parsePLY' = parseOnly (ply' <* endOfInput) 
 
 
 parseVertexPLY :: B.ByteString -> Either String PLY
@@ -76,12 +69,6 @@ ply = do
   !dataBlocks <- join <$> forM (hElems parsedHeader) elementData
   return $! PLY parsedHeader dataBlocks
 
-ply' :: Parser PLY'
-ply' = do
-  !parsedHeader <- header
-  !dataBlocks <- join <$> forM (S.fromList $ hElems parsedHeader) elementData'
-  return $! PLY' parsedHeader dataBlocks
-
 
 filteredPLY :: Element -> Parser PLY
 {-# INLINE filteredPLY #-}
@@ -89,13 +76,6 @@ filteredPLY searchElement = do
   !parsedHeader <- header
   !dataBlocks <- join <$> (forM (hElems parsedHeader) $ takeDataBlockByElement searchElement)
   return $ PLY parsedHeader dataBlocks
-
-filteredPLY' :: Element -> Parser PLY'
-{-# INLINE filteredPLY' #-}
-filteredPLY' searchElement = do
-  !parsedHeader <- header
-  !dataBlocks <- join <$> (forM (S.fromList $ hElems parsedHeader) $ takeDataBlockByElement' searchElement)
-  return $ PLY' parsedHeader dataBlocks
 
 
 takeDataBlockByElement :: Element -> Element -> Parser DataBlocks
@@ -109,27 +89,10 @@ takeDataBlockByElement (Element searchName _ searchProps) (Element name num prop
          then count num (filteredDataLineScalars ps)
          else count num (filteredDataLine ps)
 
-takeDataBlockByElement' :: Element -> Element -> Parser DataBlocks'
-{-# INLINE takeDataBlockByElement' #-}
-takeDataBlockByElement' (Element searchName _ searchProps) (Element name num props) =
-  if name /= searchName
-  then count num skipLine *> return S.empty
-  else let !ps = fromRight undefined $ foldSelect (propName <$> searchProps) (Left <$> props)
-       in
-         if allScalars searchProps props
-         then S.replicateM num (filteredDataLine' (S.fromList ps))
-         else S.replicateM num (filteredDataLine' (S.fromList ps))
-
-
-
 
 filteredDataLine :: [Either Property Property] -> Parser DataLine
 {-# INLINE filteredDataLine #-}
 filteredDataLine ps = concat <$> traverse propertyDataByName ps
-
-filteredDataLine' :: S.Seq (Either Property Property) -> Parser DataLine'
-{-# INLINE filteredDataLine' #-}
-filteredDataLine' ps = join <$> traverse propertyDataByName' ps
                       
 propertyDataByName :: Either Property Property -> Parser [Scalar]
 {-# INLINE propertyDataByName #-}
@@ -150,33 +113,9 @@ propertyDataByName (Right (ListProperty indexType propType _)) =
     let !c = scalarInt x
     count c (scalar propType <* skipSpace)
 
-propertyDataByName' :: Either Property Property -> Parser (S.Seq Scalar)
-{-# INLINE propertyDataByName' #-}
-propertyDataByName' (Left (ScalarProperty _ _)) =
-  skipScalar *> return S.empty
-propertyDataByName' (Right (ScalarProperty propType _)) =
-  do
-    !x <- scalar propType <* skipSpace
-    return $ S.singleton x
-propertyDataByName' (Left (ListProperty indexType _ _)) =
-  do
-    !x <- scalar indexType <* skipSpace
-    let !c = scalarInt x
-    count c (skipScalar <* skipSpace) *> return S.empty
-propertyDataByName' (Right (ListProperty indexType propType _)) =
-  do
-    !x <- scalar indexType <* skipSpace
-    let !c = scalarInt x
-    S.replicateM c (scalar propType <* skipSpace)
-
-
 filteredDataLineScalars :: [Either Property Property] -> Parser DataLine
 {-# INLINE filteredDataLineScalars #-}
 filteredDataLineScalars ps = catMaybes <$> traverse propertyDataByNameScalars ps
-
--- filteredDataLineScalars' :: [Either Property Property] -> Parser DataLine'
--- {-# INLINE filteredDataLineScalars' #-}
--- filteredDataLineScalars' ps = catMaybes <$> traverse propertyDataByNameScalars ps
 
 
 propertyDataByNameScalars :: Either Property Property -> Parser (Maybe Scalar)
@@ -249,12 +188,6 @@ elementData e = count (elNum e)
                   (skipComments *> dataLine (elProps e))
 
 
-elementData' :: Element -> Parser DataBlocks'
-{-# INLINE elementData' #-}
-elementData' e = S.replicateM (elNum e) (skipComments *> dataLine' (elProps e))
-
-
-
 format :: Parser Format
 format = "format" *> skipSpace *> (ascii <|> binaryLE <|> binaryBE)
   where ascii    = ASCII    <$ "ascii 1.0"
@@ -301,22 +234,6 @@ propertyData (ListProperty indexType propType _) = do
   !x <- scalar indexType <* skipSpace
   let !c = scalarInt x
   replicateM c (scalar propType <* skipSpace)
-
-
-dataLine' :: [Property] -> Parser DataLine'
-{-# INLINE dataLine' #-}
-dataLine' ps = fold <$> traverse propertyData' ps
-
-
-propertyData' :: Property -> Parser (S.Seq Scalar)
-{-# INLINE propertyData' #-}
-propertyData' (ScalarProperty propType _) = do
-  !x <- scalar propType <* skipSpace
-  return $ S.singleton x
-propertyData' (ListProperty indexType propType _) = do
-  !x <- scalar indexType <* skipSpace
-  let !c = scalarInt x
-  S.replicateM c (scalar propType <* skipSpace)
 
 
 -- * Scalar parser
