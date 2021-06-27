@@ -57,6 +57,12 @@ addVoxel (PointCloud set size) voxel = PointCloud (S.insert voxel set) size
 removeVoxel :: PointCloud -> Voxel -> PointCloud
 removeVoxel (PointCloud set size) voxel = PointCloud (S.delete voxel set) size
 
+fromList :: [Voxel] -> PointCloud
+fromList vs = PointCloud set size
+  where
+    set = S.fromList vs
+    size = computePower2 . largestDimension . S.findMax $ set
+
 getPointCloud :: Axis -> PLY -> Either String PointCloud
 getPointCloud axis ply = getCoordinatesIndexes (plyHeader ply) >>= extractVoxels axis (plyData ply)
 

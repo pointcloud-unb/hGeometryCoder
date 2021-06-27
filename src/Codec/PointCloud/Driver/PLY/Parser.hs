@@ -3,6 +3,7 @@
 module Codec.PointCloud.Driver.PLY.Parser
   ( parsePLY
   , parseVertexPLY
+  , parsePointCloud
   , readPLY
   , unflatPLY
   , readFlatPLY
@@ -11,6 +12,8 @@ module Codec.PointCloud.Driver.PLY.Parser
   ) where
 
 import Codec.PointCloud.Driver.PLY.Types
+import Codec.PointCloud.Types.Voxel
+import qualified Codec.PointCloud.Types.PointCloud as PC (PointCloud, fromList)
 
 import Flat
 import Control.Applicative
@@ -20,14 +23,11 @@ import Data.Attoparsec.ByteString.Char8 hiding (char, take)
 import Data.Int (Int8, Int16)
 import Data.Word (Word8, Word16, Word32)
 import Data.Foldable
-
-import qualified Data.ByteString.Lex.Fractional
-import qualified Data.ByteString.Lex.Integral
+import Data.Either
+import Data.Maybe (catMaybes)
 
 import qualified Data.ByteString.Char8 as B
 
-import Data.Either
-import Data.Maybe (catMaybes)
 
 parsePLY :: B.ByteString -> Either String PLY
 parsePLY = parseOnly (ply <* endOfInput) 
@@ -41,6 +41,16 @@ parseVertexPLY = parseOnly (filteredPLY vertex <* endOfInput)
              , (ScalarProperty CharT "y")
              , (ScalarProperty CharT "z")
              ]
+
+parsePointCloud :: B.ByteString -> Either String PC.PointCloud
+parsePointCloud = parseOnly (filteredPLY' vertex <* endOfInput)
+  where
+    vertex = Element "vertex" 0
+             [ (ScalarProperty CharT "x")
+             , (ScalarProperty CharT "y")
+             , (ScalarProperty CharT "z")
+             ]
+
 
 
 readPLY :: FilePath -> IO (Either String PLY)
@@ -77,6 +87,14 @@ filteredPLY searchElement = do
   !dataBlocks <- join <$> (forM (hElems parsedHeader) $ takeDataBlockByElement searchElement)
   return $ PLY parsedHeader dataBlocks
 
+filteredPLY' :: Element -> Parser PC.PointCloud
+{-# INLINE filteredPLY' #-}
+filteredPLY' searchElement = do
+  !parsedHeader <- header
+  PC.fromList . catMaybes . join <$> forM (hElems parsedHeader) (takeDataBlockByElement' searchElement)
+  
+
+
 -- Low level parsers -- 
 
 takeDataBlockByElement :: Element -> Element -> Parser DataBlocks
@@ -90,10 +108,29 @@ takeDataBlockByElement (Element searchName _ searchProps) (Element name num prop
          then count num (filteredDataLineScalars ps)
          else count num (filteredDataLine ps)
 
+takeDataBlockByElement' :: Element -> Element -> Parser [Maybe Voxel]
+{-# INLINE takeDataBlockByElement' #-}
+takeDataBlockByElement' (Element searchName _ searchProps) (Element name num props) =
+  if name /= searchName
+  then count num skipLine *> return []
+  else let !ps = fromRight undefined $ foldSelect (propName <$> searchProps) (Left <$> props)
+       in
+         if allScalars searchProps props
+         then count num (filteredDataLine' ps)
+         else count num (filteredDataLine' ps)
+
+
 
 filteredDataLine :: [Either Property Property] -> Parser DataLine
 {-# INLINE filteredDataLine #-}
 filteredDataLine ps = concat <$> traverse propertyDataByName ps
+
+filteredDataLine' :: [Either Property Property] -> Parser (Maybe Voxel)
+{-# INLINE filteredDataLine' #-}
+filteredDataLine' ps = mkVoxel <$> concat <$> traverse propertyDataByName ps
+  where
+    mkVoxel (s1:s2:s3:_) = Just $ Voxel (scalarInt s1) (scalarInt s2) (scalarInt s3)
+    mkVoxel _ = Nothing
                       
 propertyDataByName :: Either Property Property -> Parser [Scalar]
 {-# INLINE propertyDataByName #-}
@@ -219,7 +256,7 @@ c2w :: Char -> Word8
 {-# INLINE c2w #-}
 c2w = fromIntegral . ord
 
--- | Extract an Int from the Scalar types. Return 0 if float or double.
+-- | Extract an Int from the Scalar types. Rounds if float or double.
 scalarInt :: Scalar -> Int
 {-# INLINE scalarInt #-}
 scalarInt (CharS n)   = fromIntegral n
@@ -228,7 +265,9 @@ scalarInt (ShortS n)  = fromIntegral n
 scalarInt (UshortS n) = fromIntegral n
 scalarInt (IntS n)    = n
 scalarInt (UintS n)   = fromIntegral n
-scalarInt _ = 0
+scalarInt (FloatS n)  = round n
+scalarInt (DoubleS n) = round n
+
 
 foldSelect :: [B.ByteString] -> [Either Property Property] -> Either String [Either Property Property]
 foldSelect [] ps = Right ps
