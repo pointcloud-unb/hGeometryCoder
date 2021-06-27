@@ -30,6 +30,7 @@ import qualified Data.Sequence as S
 
 import System.IO.Unsafe (unsafePerformIO)
 import Data.Either
+import Data.Maybe (catMaybes)
 
 parsePLY :: B.ByteString -> Either String PLY
 parsePLY = parseOnly (ply <* endOfInput) 
@@ -83,7 +84,7 @@ ply' = do
 
 
 filteredPLY :: Element -> Parser PLY
---{-# INLINE filteredPLY #-}
+{-# INLINE filteredPLY #-}
 filteredPLY searchElement = do
   !parsedHeader <- header
   !dataBlocks <- join <$> (forM (hElems parsedHeader) $ takeDataBlockByElement searchElement)
@@ -91,41 +92,55 @@ filteredPLY searchElement = do
 
 
 takeDataBlockByElement :: Element -> Element -> Parser DataBlocks
---{-# INLINE takeDataBlockByElement #-}
+{-# INLINE takeDataBlockByElement #-}
 takeDataBlockByElement (Element searchName _ searchProps) (Element name num props) =
   if name /= searchName
   then count num skipLine *> return []
-  else count num (filteredDataLine searchProps props)
+  else let !ps = fromRight undefined $ foldSelect (propName <$> searchProps) (Left <$> props)
+       in
+         if allScalars searchProps props
+         then count num (filteredDataLineScalars ps)
+         else count num (filteredDataLine ps)
 
 
-filteredDataLine :: [Property] -> [Property] -> Parser DataLine
---{-# INLINE filteredDataLine #-}
-filteredDataLine searchProps props = concat <$> traverse propertyDataByName ps
-  where
-    ps = fromRight undefined $ foldSelect searchNames (Left <$> props)
-    searchNames = getPropertyName <$> searchProps
-    getPropertyName prop
-      | (ScalarProperty _ name) <- prop = name
-      | (ListProperty _ _ name) <- prop = name
 
+filteredDataLine :: [Either Property Property] -> Parser DataLine
+{-# INLINE filteredDataLine #-}
+filteredDataLine ps = concat <$> traverse propertyDataByName ps
+    
 propertyDataByName :: Either Property Property -> Parser [Scalar]
---{-# INLINE propertyDataByName #-}
+{-# INLINE propertyDataByName #-}
 propertyDataByName (Left (ScalarProperty _ _)) =
   skipScalar *> return []
 propertyDataByName (Right (ScalarProperty propType _)) =
   do
-    x <- scalar propType <* skipSpace
+    !x <- scalar propType <* skipSpace
     return [x]
 propertyDataByName (Left (ListProperty indexType _ _)) =
   do
-    x <- scalar indexType <* skipSpace
-    let c = scalarInt x
+    !x <- scalar indexType <* skipSpace
+    let !c = scalarInt x
     count c (skipScalar <* skipSpace) *> return []
 propertyDataByName (Right (ListProperty indexType propType _)) =
   do
-    x <- scalar indexType <* skipSpace
-    let c = scalarInt x
+    !x <- scalar indexType <* skipSpace
+    let !c = scalarInt x
     count c (scalar propType <* skipSpace)
+
+filteredDataLineScalars :: [Either Property Property] -> Parser DataLine
+{-# INLINE filteredDataLineScalars #-}
+filteredDataLineScalars ps = catMaybes <$> traverse propertyDataByNameScalars ps
+
+
+propertyDataByNameScalars :: Either Property Property -> Parser (Maybe Scalar)
+{-# INLINE propertyDataByNameScalars #-}
+propertyDataByNameScalars (Left (ScalarProperty _ _)) =
+  skipScalar *> return Nothing
+propertyDataByNameScalars (Right (ScalarProperty propType _)) =
+  do
+    !x <- scalar propType <* skipSpace
+    return $ Just x
+
 
 
 
@@ -368,4 +383,14 @@ switchEither :: Either a a -> Either a a
 switchEither (Right x) = Left x
 switchEither (Left x)  = Right x
 
+isScalarProperty :: Property -> Bool
+{-# INLINE isScalarProperty #-}
+isScalarProperty (ScalarProperty _ _) = True
+isScalarProperty _ = False
 
+allScalars :: [Property] -> [Property] -> Bool
+{-# INLINE allScalars #-}
+allScalars searchProps props = p && s
+  where
+    s = and $ isScalarProperty <$> searchProps
+    p = and $ isScalarProperty <$> props
