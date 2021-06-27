@@ -4,7 +4,9 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
+
 -- hash: dad7286a31f9e8107959bd81a456bca5cdf8acce811c0969b4a8611c8bd333b9
+
 
 name:           hGeometryCoder
 version:        0.1.0.0
@@ -53,6 +55,7 @@ library
     , containers
     , deepseq
     , flat
+    , hspec
     , matrix
     , text
     , vector
@@ -75,14 +78,15 @@ executable hGeometryCoder
     , deepseq
     , flat
     , hGeometryCoder
+    , hspec
     , matrix
     , text
     , vector
   default-language: Haskell2010
 
-test-suite hGeometryCoder-test
+test-suite pc2PLY-test
   type: exitcode-stdio-1.0
-  main-is: Spec.hs
+  main-is: pc2PLY_test.hs
   other-modules:
       Paths_hGeometryCoder
   hs-source-dirs:
@@ -97,6 +101,7 @@ test-suite hGeometryCoder-test
     , deepseq
     , flat
     , hGeometryCoder
+    , hspec
     , matrix
     , text
     , vector
@@ -120,6 +125,7 @@ benchmark parser-bench
     , deepseq
     , flat
     , hGeometryCoder
+    , hspec
     , matrix
     , text
     , vector
