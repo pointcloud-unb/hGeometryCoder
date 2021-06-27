@@ -15,7 +15,7 @@ import Codec.PointCloud.Driver.PLY.Types
 
 import Flat
 import Control.Applicative
-import Control.Monad (join, forM, replicateM)
+import Control.Monad (join, forM, replicateM, (<$!>))
 import Data.Char (ord)
 import Data.Attoparsec.ByteString.Char8 hiding (char, take)
 import Data.Int (Int8, Int16)
@@ -240,7 +240,6 @@ scalarType = choice $
              , DoubleT <$ ("double " <|> "float64 ") ]
 
 
-
 dataLine :: [Property] -> Parser DataLine
 {-# INLINE dataLine #-}
 dataLine ps = concat <$> traverse propertyData ps
@@ -273,31 +272,17 @@ propertyData' (ListProperty indexType propType _) = do
   S.replicateM c (scalar propType <* skipSpace)
 
 
- 
-
-
--- | Extract an Int from the Scalar types. Return 0 if float or double.
-scalarInt :: Scalar -> Int
-{-# INLINE scalarInt #-}
-scalarInt !(CharS n)   = fromIntegral n
-scalarInt !(UcharS n)  = fromIntegral n
-scalarInt !(ShortS n)  = fromIntegral n
-scalarInt !(UshortS n) = fromIntegral n
-scalarInt !(IntS n)    = n
-scalarInt !(UintS n)   = fromIntegral n
-scalarInt _ = 0
-
 -- * Scalar parser
 scalar :: ScalarType -> Parser Scalar
 {-# INLINE scalar #-}
-scalar !CharT   = CharS   <$> char
-scalar !UcharT  = UcharS  <$> uchar
-scalar !ShortT  = ShortS  <$> int16
-scalar !UshortT = UshortS <$> uint16
-scalar !IntT    = IntS    <$> int
-scalar !UintT   = UintS   <$> uint
-scalar !FloatT  = FloatS  <$> float
-scalar !DoubleT = DoubleS <$> double
+scalar !CharT   = CharS   <$!> char
+scalar !UcharT  = UcharS  <$!> uchar
+scalar !ShortT  = ShortS  <$!> int16
+scalar !UshortT = UshortS <$!> uint16
+scalar !IntT    = IntS    <$!> int
+scalar !UintT   = UintS   <$!> uint
+scalar !FloatT  = FloatS  <$!> float
+scalar !DoubleT = DoubleS <$!> double
 
 -- * Numeric parsers
 char :: Parser Int8
@@ -353,6 +338,16 @@ c2w :: Char -> Word8
 c2w = fromIntegral . ord
 {-# INLINE c2w #-}
 
+-- | Extract an Int from the Scalar types. Return 0 if float or double.
+scalarInt :: Scalar -> Int
+{-# INLINE scalarInt #-}
+scalarInt !(CharS n)   = fromIntegral n
+scalarInt !(UcharS n)  = fromIntegral n
+scalarInt !(ShortS n)  = fromIntegral n
+scalarInt !(UshortS n) = fromIntegral n
+scalarInt !(IntS n)    = n
+scalarInt !(UintS n)   = fromIntegral n
+scalarInt _ = 0
 
 foldSelect :: [B.ByteString] -> [Either Property Property] -> Either String [Either Property Property]
 foldSelect [] ps = Right ps
