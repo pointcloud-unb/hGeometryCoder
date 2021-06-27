@@ -106,7 +106,7 @@ takeDataBlockByElement' (Element searchName _ searchProps) (Element name num pro
   else let !ps = fromRight undefined $ foldSelect (propName <$> searchProps) (Left <$> props)
        in
          if allScalars searchProps props
-         then count num (filteredDataLine' ps)
+         then count num (filteredDataLineScalars' ps)
          else count num (filteredDataLine' ps)
 
 
@@ -144,6 +144,13 @@ propertyDataByName (Right (ListProperty indexType propType _)) =
 filteredDataLineScalars :: [Either Property Property] -> Parser DataLine
 {-# INLINE filteredDataLineScalars #-}
 filteredDataLineScalars ps = catMaybes <$> traverse propertyDataByNameScalars ps
+
+filteredDataLineScalars' :: [Either Property Property] -> Parser (Maybe Voxel)
+{-# INLINE filteredDataLineScalars' #-}
+filteredDataLineScalars' ps = mkVoxel . catMaybes <$> traverse propertyDataByNameScalars ps
+  where
+    mkVoxel (s1:s2:s3:_) = Just $ Voxel (scalarInt s1) (scalarInt s2) (scalarInt s3)
+    mkVoxel _ = Nothing
 
 
 propertyDataByNameScalars :: Either Property Property -> Parser (Maybe Scalar)
