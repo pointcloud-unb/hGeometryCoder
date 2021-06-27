@@ -241,6 +241,9 @@ skipScalar = (skipWhile $ not . isSpace) <* skipSpace
 skipElementData :: Element -> Parser ()
 skipElementData e = count (elNum e) (skipComments *> takeLine) *> pure ()
 
+skipRestOfLine :: Parser ()
+skipRestOfLine = skipWhile (not . isEndOfLine) >> endOfLine
+
 takeLine :: Parser B.ByteString
 {-# INLINE takeLine #-}
 takeLine = takeTill $ isEndOfLine . c2w
