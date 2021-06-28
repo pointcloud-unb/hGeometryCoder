@@ -148,12 +148,8 @@ takeDataBlockByElement'' (Element searchName _ searchProps) (Element name num pr
              maybe (return (xs, size)) (\(voxel, vxSize) -> return (voxel:xs, max size vxSize)) x
        in
          if allScalars searchProps props
-         then do
-           parsed <- accParser num (filteredDataLine'' ps)
-           return $ Just $ PC.fromList' parsed
-         else do
-           parsed <- accParser num (filteredDataLine'' ps)
-           return $ Just $ PC.fromList' parsed
+         then Just . PC.fromList' <$!> accParser num (filteredDataLineScalars'' ps)
+         else Just . PC.fromList' <$!> accParser num (filteredDataLine'' ps)
 
            
 filteredDataLine :: [Either Property Property] -> Parser DataLine
@@ -203,6 +199,13 @@ filteredDataLineScalars' :: [Either Property Property] -> Parser (Maybe Voxel)
 filteredDataLineScalars' ps = mkVoxel . catMaybes <$> traverse propertyDataByNameScalars ps
   where
     mkVoxel (s1:s2:s3:_) = Just $ Voxel (scalarInt s1) (scalarInt s2) (scalarInt s3)
+    mkVoxel _ = Nothing
+
+filteredDataLineScalars'' :: [Either Property Property] -> Parser (Maybe (Voxel, Int))
+{-# INLINE filteredDataLineScalars'' #-}
+filteredDataLineScalars'' ps = mkVoxel . catMaybes <$> traverse propertyDataByNameScalars ps
+  where
+    mkVoxel (s1:s2:s3:_) = Just (Voxel (scalarInt s1) (scalarInt s2) (scalarInt s3), maximum $ scalarInt <$> [s1,s2,s3] )
     mkVoxel _ = Nothing
 
 
